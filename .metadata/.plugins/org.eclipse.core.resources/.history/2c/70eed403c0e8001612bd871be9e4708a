@@ -213,20 +213,17 @@ public class TupleDesc implements Serializable {
     public boolean equals(Object o) {
         // some code goes here
     	//types and size
-    	if(o == null || typeAr == null ){
+    	if(o == null ){
     		return false;
     	}
     	else{
     		if(o instanceof TupleDesc){
-    			TupleDesc temp = (TupleDesc) o;
+	    	TupleDesc temp = (TupleDesc) o;
 		    	if (this.getSize() == temp.getSize()){
-		    		System.out.println("right size!");
 		    		int counter = 0; 
 		    		Type tempType;
 		    		for (Type x : temp.typeAr){
 		    			tempType = this.typeAr[counter];
-		    			System.out.println(tempType.toString());
-		    			System.out.println(x.toString());
 		    			if(tempType == null && x != null){
 		    				return false; 
 		    			}
@@ -238,15 +235,10 @@ public class TupleDesc implements Serializable {
 		    			}
 		    			
 		    		}
-		    		System.out.println("They're equal");
 		    		return true; 
-		    	}
-		    	System.out.println("here");
-		    }else{
-	    		System.out.println("o not tupleDesc");
-		        return false;
+		    		}
 		    }
-    		return false;
+	        return false;
     	}
     }
 
