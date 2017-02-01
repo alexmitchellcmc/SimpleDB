@@ -146,15 +146,11 @@ public class TupleDesc implements Serializable {
     public int fieldNameToIndex(String name) throws NoSuchElementException {
     	int counter = 0;
         for (String x : fieldAr){
-        	if(x == null){
-        		counter++; 	
-        	}
-        	else if (x.equals(name)){
+        	if (x.equals(name)){
+        		counter++;
         		return counter;
         	}
-        	else{
-        		counter++; 	
-        	}
+        	counter++; 	 
         }
         throw new NoSuchElementException("field not in array");
     }
@@ -213,32 +209,21 @@ public class TupleDesc implements Serializable {
     public boolean equals(Object o) {
         // some code goes here
     	//types and size
-    	if(o == null ){
-    		return false;
+    	TupleDesc temp = (TupleDesc) o;
+    	if (this.getSize() == temp.getSize()){
+    		int counter = 0; 
+    		Type tempType;
+    		for (Type x : temp.typeAr){
+    			tempType = this.typeAr[counter];
+    			
+    			if (!tempType.equals(x)){
+    				return false;
+    			}
+    			
+    		}
+    			return true; 
     	}
-    	else{
-    		if(o instanceof TupleDesc){
-	    	TupleDesc temp = (TupleDesc) o;
-		    	if (this.getSize() == temp.getSize()){
-		    		int counter = 0; 
-		    		Type tempType;
-		    		for (Type x : temp.typeAr){
-		    			tempType = this.typeAr[counter];
-		    			if(tempType == null && x != null){
-		    				return false; 
-		    			}
-		    			if(tempType != null && x == null){
-		    				return false; 
-		    			}
-		    			if (!tempType.equals(x)){
-		    				return false;
-		    			}		    			
-		    		}
-		    		return true; 
-		    		}
-		    }
-	        return false;
-    	}
+        return false;
     }
 
     public int hashCode() {

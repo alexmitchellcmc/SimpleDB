@@ -213,32 +213,27 @@ public class TupleDesc implements Serializable {
     public boolean equals(Object o) {
         // some code goes here
     	//types and size
-    	if(o == null ){
-    		return false;
+    	if(o instanceof TupleDesc ){
+    		
+    	    	TupleDesc temp = (TupleDesc) o;
+    	    	if (this.getSize() == temp.getSize()){
+    	    		int counter = 0; 
+    	    		Type tempType;
+    	    		for (Type x : temp.typeAr){
+    	    			tempType = this.typeAr[counter];
+    	    			
+    	    			if (!tempType.equals(x)){
+    	    				return false;
+    	    			}
+    	    			
+    	    		}
+    	    		return true; 
+    	    	}
     	}
-    	else{
-    		if(o instanceof TupleDesc){
-	    	TupleDesc temp = (TupleDesc) o;
-		    	if (this.getSize() == temp.getSize()){
-		    		int counter = 0; 
-		    		Type tempType;
-		    		for (Type x : temp.typeAr){
-		    			tempType = this.typeAr[counter];
-		    			if(tempType == null && x != null){
-		    				return false; 
-		    			}
-		    			if(tempType != null && x == null){
-		    				return false; 
-		    			}
-		    			if (!tempType.equals(x)){
-		    				return false;
-		    			}		    			
-		    		}
-		    		return true; 
-		    		}
-		    }
-	        return false;
-    	}
+
+		return false;
+    
+	 
     }
 
     public int hashCode() {

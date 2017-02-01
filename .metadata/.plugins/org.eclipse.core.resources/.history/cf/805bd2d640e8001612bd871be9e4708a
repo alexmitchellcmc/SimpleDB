@@ -232,7 +232,8 @@ public class TupleDesc implements Serializable {
 		    			}
 		    			if (!tempType.equals(x)){
 		    				return false;
-		    			}		    			
+		    			}
+		    			
 		    		}
 		    		return true; 
 		    		}

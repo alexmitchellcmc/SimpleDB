@@ -224,15 +224,11 @@ public class TupleDesc implements Serializable {
 		    		Type tempType;
 		    		for (Type x : temp.typeAr){
 		    			tempType = this.typeAr[counter];
-		    			if(tempType == null && x != null){
-		    				return false; 
-		    			}
-		    			if(tempType != null && x == null){
-		    				return false; 
-		    			}
+		    			
 		    			if (!tempType.equals(x)){
 		    				return false;
-		    			}		    			
+		    			}
+		    			
 		    		}
 		    		return true; 
 		    		}
