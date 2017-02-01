@@ -172,20 +172,18 @@ public class TupleDesc implements Serializable {
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
         // some code goes here
     	ArrayList<String> tempFields = new ArrayList<String>();
-    	ArrayList<Type> tempTypes = new ArrayList<Type>();
+    	
         for(String x : td1.fieldAr){
         	tempFields.add(x);
         }
-        for(Type y : td1.typeAr){
-        	tempTypes.add(y);
-        }
+        
         for(String z : td2.fieldAr){
         	tempFields.add(z);
         }
-        for(Type t : td2.typeAr){
-        	tempTypes.add(t);
-        }
-        return new TupleDesc((Type[])tempTypes.toArray(new Type[tempTypes.size()]) , (String[])tempFields.toArray(new String[tempFields.size()]));
+        
+
+        String[] stringArr = (String[])tempFields.toArray(); 
+        return new TupleDesc( null, stringArr);
     }
 
     /**

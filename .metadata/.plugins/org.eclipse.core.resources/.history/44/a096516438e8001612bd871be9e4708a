@@ -185,7 +185,9 @@ public class TupleDesc implements Serializable {
         for(Type t : td2.typeAr){
         	tempTypes.add(t);
         }
-        return new TupleDesc((Type[])tempTypes.toArray(new Type[tempTypes.size()]) , (String[])tempFields.toArray(new String[tempFields.size()]));
+        Type[] typeArr = (Type[]) tempTypes.toArray();
+        String[] stringArr = (String[])tempFields.toArray(); 
+        return new TupleDesc(typeArr , stringArr);
     }
 
     /**

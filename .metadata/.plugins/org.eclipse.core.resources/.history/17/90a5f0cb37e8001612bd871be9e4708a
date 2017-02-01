@@ -174,18 +174,18 @@ public class TupleDesc implements Serializable {
     	ArrayList<String> tempFields = new ArrayList<String>();
     	ArrayList<Type> tempTypes = new ArrayList<Type>();
         for(String x : td1.fieldAr){
-        	tempFields.add(x);
+        	tempFields.add((String)x);
         }
         for(Type y : td1.typeAr){
-        	tempTypes.add(y);
+        	tempTypes.add((Type)y);
         }
         for(String z : td2.fieldAr){
-        	tempFields.add(z);
+        	tempFields.add((String)z);
         }
         for(Type t : td2.typeAr){
-        	tempTypes.add(t);
+        	tempTypes.add((Type)t);
         }
-        return new TupleDesc((Type[])tempTypes.toArray(new Type[tempTypes.size()]) , (String[])tempFields.toArray(new String[tempFields.size()]));
+        return new TupleDesc((Type[])tempTypes.toArray() , (String[])tempFields.toArray());
     }
 
     /**
