@@ -11,6 +11,10 @@ public class TupleDesc implements Serializable {
     /**
      * A help class to facilitate organizing the information of each field
      * */
+	
+	
+	
+	
     public static class TDItem implements Serializable {
 
         private static final long serialVersionUID = 1L;
@@ -34,15 +38,19 @@ public class TupleDesc implements Serializable {
             return fieldName + "(" + fieldType + ")";
         }
     }
-
+    
+   /*Our fields*/
+    private ArrayList<TDItem> tdItems; 
+    private Type[] typeAr; 
+    private String[] fieldAr;
     /**
      * @return
      *        An iterator which iterates over all the field TDItems
      *        that are included in this TupleDesc
      * */
     public Iterator<TDItem> iterator() {
-        // some code goes here
-        return null;
+        return tdItems.iterator();
+        
     }
 
     private static final long serialVersionUID = 1L;
@@ -58,8 +66,14 @@ public class TupleDesc implements Serializable {
      *            array specifying the names of the fields. Note that names may
      *            be null.
      */
+    
+    
+    
+    
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
         // some code goes here
+    	this.typeAr = typeAr;
+    	this.fieldAr = fieldAr; 
     }
 
     /**
@@ -72,6 +86,7 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr) {
         // some code goes here
+    	this.typeAr = typeAr;
     }
 
     /**
@@ -79,7 +94,7 @@ public class TupleDesc implements Serializable {
      */
     public int numFields() {
         // some code goes here
-        return 0;
+        return this.fieldAr.length;
     }
 
     /**
@@ -93,7 +108,7 @@ public class TupleDesc implements Serializable {
      */
     public String getFieldName(int i) throws NoSuchElementException {
         // some code goes here
-        return null;
+        return this.fieldAr[i];
     }
 
     /**
@@ -108,7 +123,7 @@ public class TupleDesc implements Serializable {
      */
     public Type getFieldType(int i) throws NoSuchElementException {
         // some code goes here
-        return null;
+    	return typeAr[i];
     }
 
     /**
@@ -121,8 +136,14 @@ public class TupleDesc implements Serializable {
      *             if no field with a matching name is found.
      */
     public int fieldNameToIndex(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
+    	int counter = 0;
+        for (String x : fieldAr){
+        	if (x.equals(name)){
+        		return counter;
+        	}
+        	counter++;        	 
+        }
+        throw new NoSuchElementException("field not in array");
     }
 
     /**
@@ -131,7 +152,11 @@ public class TupleDesc implements Serializable {
      */
     public int getSize() {
         // some code goes here
-        return 0;
+    	int counter = 0;
+        for (Type x : typeAr){
+        	counter += x.getLen();   	      	 
+        }
+        return counter;
     }
 
     /**
@@ -146,7 +171,21 @@ public class TupleDesc implements Serializable {
      */
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
         // some code goes here
-        return null;
+    	ArrayList<String> tempFields = new ArrayList<String>();
+    	ArrayList<Type> tempTypes = new ArrayList<Type>();
+        for(String x : td1.fieldAr){
+        	tempFields.add(x);
+        }
+        for(Type y : td1.typeAr){
+        	tempTypes.add(y);
+        }
+        for(String z : td2.fieldAr){
+        	tempFields.add(z);
+        }
+        for(Type t : td2.typeAr){
+        	tempTypes.add(t);
+        }
+        return new TupleDesc((Type[])tempTypes.toArray() , (String[])tempFields.toArray());
     }
 
     /**
@@ -160,13 +199,30 @@ public class TupleDesc implements Serializable {
      */
     public boolean equals(Object o) {
         // some code goes here
+    	//types and size
+    	TupleDesc temp = (TupleDesc) o;
+    	if (this.getSize() == temp.getSize()){
+    		int counter = 0; 
+    		Type tempType;
+    		for (Type x : temp.typeAr){
+    			tempType = this.typeAr[counter];
+    			
+    			if (!tempType.equals(x)){
+    				return false;
+    			}
+    			
+    		}
+    			return true; 
+    	}
         return false;
     }
 
     public int hashCode() {
         // If you want to use TupleDesc as keys for HashMap, implement this so
         // that equal objects have equals hashCode() results
-        throw new UnsupportedOperationException("unimplemented");
+    	
+    	//we didn't make hashcodes equal for equal objects
+        return this.hashCode();
     }
 
     /**
@@ -178,6 +234,20 @@ public class TupleDesc implements Serializable {
      */
     public String toString() {
         // some code goes here
-        return "";
+    	String concatonation = "";
+    	Type tempType; 
+    	int counter = 0; 
+    	
+    	for (String field : this.fieldAr){
+			tempType = this.typeAr[counter];
+			concatonation += field;
+			concatonation += tempType; 
+			concatonation += ","; 
+		}
+        
+    	//cut off last comma
+    	StringBuffer buf = new StringBuffer(concatonation.length()-1);
+    	
+        return buf.toString();
     }
 }
