@@ -23,7 +23,7 @@ public class Catalog {
      * Creates a new, empty catalog.
      */
 	
-	//HashMap<> tables
+	HashMap<> tables
     public Catalog() {
         // some code goes here
     }

@@ -12,6 +12,9 @@ public class TupleDesc implements Serializable {
      * A help class to facilitate organizing the information of each field
      * */
 	
+	
+	
+	
     public static class TDItem implements Serializable {
 
         private static final long serialVersionUID = 1L;
@@ -234,7 +237,6 @@ public class TupleDesc implements Serializable {
 		    				System.out.println("returning false!");
 		    				return false;
 		    			}
-		    			counter++;
 		    			
 		    		}
 		    		System.out.println("They're equal returning true");

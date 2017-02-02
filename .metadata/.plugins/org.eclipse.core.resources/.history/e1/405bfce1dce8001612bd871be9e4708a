@@ -12,6 +12,9 @@ public class TupleDesc implements Serializable {
      * A help class to facilitate organizing the information of each field
      * */
 	
+	
+	
+	
     public static class TDItem implements Serializable {
 
         private static final long serialVersionUID = 1L;
