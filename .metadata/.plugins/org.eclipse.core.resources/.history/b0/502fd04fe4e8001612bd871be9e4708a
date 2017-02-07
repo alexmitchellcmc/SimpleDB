@@ -39,7 +39,6 @@ public class BufferPool {
     
     public BufferPool(int numPages) {
     	this.numPages = numPages;
-    	pool = new HashMap<>(50);
         // some code goes here
     }
     

@@ -39,7 +39,7 @@ public class BufferPool {
     
     public BufferPool(int numPages) {
     	this.numPages = numPages;
-    	pool = new HashMap<>(50);
+    	pool = new HashMap<>();
         // some code goes here
     }
     

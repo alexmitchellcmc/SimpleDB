@@ -432,3 +432,13 @@ java.lang.NullPointerException
 !MESSAGE Unhandled event loop exception
 !STACK 0
 java.lang.NullPointerException
+
+!ENTRY org.eclipse.ui 4 0 2017-02-01 16:36:45.541
+!MESSAGE Unhandled event loop exception
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.ui 4 0 2017-02-01 17:08:56.028
+!MESSAGE Unhandled event loop exception
+!STACK 0
+java.lang.NullPointerException
