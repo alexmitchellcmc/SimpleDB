@@ -67,8 +67,9 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return this.tuples.length -1;
-
+    	int pageSize = BufferPool.getPageSize();
+    	int tupleSize = td.getSize();
+    	return (int) Math.floor((pageSize * 8) / (tupleSize * 8 + 1));
     }
 
     /**
