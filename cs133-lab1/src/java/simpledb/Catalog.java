@@ -45,8 +45,9 @@ public class Catalog {
      * Constructor.
      * Creates a new, empty catalog.
      */
-    public Catalog() {
-    	this.tables = new HashMap<>();
+    @SuppressWarnings("unchecked")
+	public Catalog() {
+    	this.tables = new HashMap();
         // some code goes here
     }
 

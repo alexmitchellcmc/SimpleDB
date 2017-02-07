@@ -37,9 +37,10 @@ public class BufferPool {
     private HashMap<PageId,Page> pool; 
     private int numPages; 
     
-    public BufferPool(int numPages) {
+    @SuppressWarnings("unchecked")
+	public BufferPool(int numPages) {
     	this.numPages = numPages;
-    	pool = new HashMap<>(50);
+    	pool = new HashMap(50);
         // some code goes here
     }
     
