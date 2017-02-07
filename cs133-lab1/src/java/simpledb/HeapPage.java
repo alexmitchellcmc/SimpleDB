@@ -283,7 +283,7 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-    	 return -1; 
+    	return ((this.getHeaderSize() - this.getNumTuples()*td.getSize())/8);
     }
 
     /**
