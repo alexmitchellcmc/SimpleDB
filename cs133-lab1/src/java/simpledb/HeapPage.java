@@ -67,8 +67,9 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return this.tuples.length -1;
-
+    	int pageSize = BufferPool.getPageSize();
+    	int tupleSize = td.getSize();
+    	return (int) Math.floor((pageSize * 8) / (tupleSize * 8 + 1));
     }
 
     /**
@@ -282,7 +283,19 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-    	 return -1; 
+    	
+    	int counter = 0; 
+    	for (byte b : header){
+    		for (int i = 0; i < 8; i++){
+    			int temp =  (b & 1);
+    			if (temp == 0){
+    				counter++;
+    			}
+    			b = (byte) (b >> 1); 
+    		}
+    		
+    	}
+    	return counter; 
     }
 
     /**
@@ -290,7 +303,33 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+    	if(i > tuples.length){
+    		return false; 
+    	}
+    	
+    	int byyte = i/8;
+    	byte table = header[byyte];
+    	int biit = i % 8; 
+    	int[] arr = new int[8];
+		for(int y = 0; y < 8; y++){
+			
+			int temp = (table & 1);
+			arr[y]	= temp; 
+			table = (byte)(table >> 1);
+			
+		}
+		
+		Collections.reverse(Arrays.asList(arr));
+		
+		if(arr[biit] == 1){
+			return true;
+		}
+		else{
+			return false; 
+		}
+    	 
+    	
+    	
     }
 
     /**
@@ -305,10 +344,50 @@ public class HeapPage implements Page {
      * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
-    public Iterator<Tuple> iterator() {
+    private class TuplesIterator<Tuple> implements Iterator{
+    	Tuple temp;
+    	int index; 
+    	int length;
+    	
+    	@SuppressWarnings("unchecked")
+		TuplesIterator(){
+    		index = 0; 
+    		length = tuples.length;
+    		temp = (Tuple) tuples[index];
+    	}
+
+		@Override
+		public boolean hasNext() {
+			if(index+1 < length){
+				return true; 
+			}
+			
+			return false; 
+			
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public Object next() {
+			if (hasNext()){
+				temp = (Tuple) tuples[index + 1];
+				if (temp == null){
+					this.index++;
+					return null; 
+				}
+				else{
+					this.index++;
+					return temp;
+				}
+			}
+			return null; 
+			
+		}
+    }
+    @SuppressWarnings("unchecked")
+	public Iterator<Tuple> iterator() {
         
-        ArrayList<Tuple> list = new ArrayList(Arrays.asList(tuples));
-        return list.iterator();
+        return new TuplesIterator<Tuple>(); 
     }
 
 }
