@@ -14,31 +14,23 @@ import java.util.concurrent.ConcurrentHashMap;
  * For now, this is a stub catalog that must be populated with tables by a
  * user program before it can be used -- eventually, this should be converted
  * to a catalog that reads a catalog table from disk.
- * 
+ *
  * @Threadsafe
  */
 public class Catalog {
 
-    /**
-     * Constructor.
-     * Creates a new, empty catalog.
-     */
-	
-	
 	private HashMap<Integer, Table> tables;
-	
-	
+
+	//inner Table class containing Dbfile, name, and pkeyField, and methods to get these values
 	public static class Table  {
 		private DbFile file;
 		private String name;
 		private String pkeyField;
-		
 		public Table(DbFile file, String name, String pkeyField){
 			this.file = file;
 			this.name = name;
 			this.pkeyField = pkeyField;
 		}
-		
 		public DbFile getFile(){
 			return this.file;
 		}
@@ -48,14 +40,14 @@ public class Catalog {
 		public String getPKeyField(){
 			return this.pkeyField;
 		}
-        
-    
-    }
-	
+	}
+		/**
+     * Constructor.
+     * Creates a new, empty catalog.
+     */
     public Catalog() {
     	this.tables = new HashMap<>();
         // some code goes here
-    	
     }
 
     /**
@@ -96,14 +88,14 @@ public class Catalog {
     public int getTableId(String name) throws NoSuchElementException {
         Iterator<Integer> it = tables.keySet().iterator();
         while (it.hasNext()){
-        	
+
         	Integer tempKey = it.next();
         	Table tempTable = tables.get(tempKey);
-        	
+
         	if (tempTable.getName().equals(name)){
         		return tempKey;
         	}
-        
+
         }
         throw new NoSuchElementException("no table id in catalog");
     }
@@ -117,14 +109,14 @@ public class Catalog {
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
         Table temp =  tables.get(tableid);
         TupleDesc tempTupleDesc;
-        
+
         if (temp != null){
         	tempTupleDesc = temp.file.getTupleDesc();
         	 return tempTupleDesc;
         }
-        
+
         throw new NoSuchElementException("No tupleDesc at this tableid");
-       
+
     }
 
     /**
@@ -135,25 +127,25 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
     	Table temp =  tables.get(tableid);
-        
-        
+
+
         if (temp != null){
         	return temp.getFile();
         }
-        
-        return null; 
-       
+
+        return null;
+
     }
 
     public String getPrimaryKey(int tableid) {
     	Table temp =  tables.get(tableid);
-        
-        
+
+
         if (temp != null){
         	return temp.getPKeyField();
         }
-        
-        return null; 
+
+        return null;
     }
 
     public Iterator<Integer> tableIdIterator() {
@@ -162,20 +154,20 @@ public class Catalog {
 
     public String getTableName(int id) {
     	Table temp =  tables.get(id);
-        
-        
+
+
         if (temp != null){
         	return temp.getName();
         }
-        
-        return null; 
+
+        return null;
     }
-    
+
     /** Delete all tables from the catalog */
     public void clear() {
         tables.clear();
     }
-    
+
     /**
      * Reads the schema from a file and creates the appropriate tables in the database.
      * @param catalogFile
@@ -185,7 +177,7 @@ public class Catalog {
         String baseFolder=new File(new File(catalogFile).getAbsolutePath()).getParent();
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(catalogFile)));
-            
+
             while ((line = br.readLine()) != null) {
                 //assume line is of the format name (field type, field type, ...)
                 String name = line.substring(0, line.indexOf("(")).trim();
@@ -231,4 +223,3 @@ public class Catalog {
         }
     }
 }
-
