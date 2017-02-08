@@ -28,6 +28,7 @@ public class HeapFile implements DbFile {
 	public int id; 
 	public HashMap<PageId,Page> pages;
 	
+	
     public HeapFile(File f, TupleDesc td) {
         // some code goes here
     	this.f = f;
@@ -70,9 +71,42 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public Page readPage(PageId pid) {
+    public Page readPage(PageId pid) throws IllegalArgumentException {
         // some code goes here
-        return pages.get(pid);
+    	
+    	 
+    	int PageNumber = pid.pageNumber();
+    	int pageSize = BufferPool.PAGE_SIZE;
+    	//int heapFileSize = (int) f.length(); 
+    	
+    	
+		RandomAccessFile disk;
+		byte[] page = new byte[pageSize];
+		try {
+			disk = new RandomAccessFile(f, "r");
+			disk.read(page, PageNumber*pageSize, pageSize);
+			disk.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		HeapPageId id = new HeapPageId((pid.getTableId()), PageNumber);
+		try {
+			return new HeapPage(id,page);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null; 
+				
+	    	
+		
+		
+    	
     }
 
     // see DbFile.java for javadocs
@@ -85,8 +119,11 @@ public class HeapFile implements DbFile {
      * Returns the number of pages in this HeapFile.
      */
     public int numPages() {
-        // some code goes here
-        return 0;
+    	
+    	int pageSize = BufferPool.PAGE_SIZE;
+    	int heapFileSize = (int) f.length(); 
+    	
+    	return heapFileSize/pageSize;
     }
 
     // see DbFile.java for javadocs
@@ -105,10 +142,53 @@ public class HeapFile implements DbFile {
         // not necessary for lab1
     }
 
+    
+private class HeapFileIterator<Page> implements DbFileIterator{
+    	
+    	public int index;
+    	public int length; 
+    	public int tuplesPerPage;
+    	public RandomAccessFile raf; 
+		@Override
+		public void open() throws DbException, TransactionAbortedException {
+			// TODO Auto-generated method stub
+			try {
+				raf = new RandomAccessFile(f, "r");
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		@Override
+		public boolean hasNext() throws DbException,
+				TransactionAbortedException {
+			// TODO Auto-generated method stub
+			return false;
+		}
+		@Override
+		public Tuple next() throws DbException, TransactionAbortedException,
+				NoSuchElementException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		@Override
+		public void rewind() throws DbException, TransactionAbortedException {
+			// TODO Auto-generated method stub
+			
+		}
+		@Override
+		public void close() {
+			// TODO Auto-generated method stub
+			
+		}
+    	
+    	
+		
+    }
     // see DbFile.java for javadocs
-    public DbFileIterator iterator(TransactionId tid) {
+    public DbFileIterator iterator(TransactionId tid)  {
         // some code goes here
-        return null;
+        return new HeapFileIterator<Page>();
     }
 
 }
