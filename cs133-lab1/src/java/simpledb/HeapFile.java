@@ -25,7 +25,7 @@ public class HeapFile implements DbFile {
 	
 	public File f; 
 	public TupleDesc td;
-	public int id; 
+	//public int id; 
 	public HashMap<PageId,Page> pages;
 	
 	
@@ -102,10 +102,6 @@ public class HeapFile implements DbFile {
 			e.printStackTrace();
 		}
 		return null; 
-				
-	    	
-		
-		
     	
     }
 
@@ -149,6 +145,7 @@ private class HeapFileIterator<Page> implements DbFileIterator{
     	public int length; 
     	public int tuplesPerPage;
     	public RandomAccessFile raf; 
+    	
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
 			// TODO Auto-generated method stub
@@ -162,6 +159,7 @@ private class HeapFileIterator<Page> implements DbFileIterator{
 		@Override
 		public boolean hasNext() throws DbException,
 				TransactionAbortedException {
+			Database.getBufferPool().getPage(tid, pid, perm)
 			// TODO Auto-generated method stub
 			return false;
 		}
