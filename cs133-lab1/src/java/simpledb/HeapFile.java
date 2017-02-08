@@ -26,10 +26,13 @@ public class HeapFile implements DbFile {
 	public File f; 
 	public TupleDesc td;
 	public int id; 
+	public HashMap<PageId,Page> pages;
+	
     public HeapFile(File f, TupleDesc td) {
         // some code goes here
     	this.f = f;
     	this.td = td;
+    	this.pages = new HashMap<PageId,Page>();
     }
 
     /**
@@ -71,7 +74,7 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
         // some code goes here
-        return null;
+        return pages.get(pid);
     }
 
     // see DbFile.java for javadocs
