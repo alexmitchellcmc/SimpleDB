@@ -141,20 +141,19 @@ public class HeapFile implements DbFile {
     
 public class HeapFileIterator<Page> implements DbFileIterator{
     	
-    	public int index;
+		public Iterator<Tuple> pageIterator;
+    	public int currentPage;
     	public int tupleIndex; 
     	public Tuple curTuple; 
     	public int pageNumbers = numPages();
     	public int pageSize = BufferPool.PAGE_SIZE;
-    	public TransactionId tid; 
-    	
-    	
-    	//we have an array of all pages called pages 
+    	public TransactionId tid;  
     	public RandomAccessFile raf; 
+    	
 		public HeapFileIterator(TransactionId tid) {
 			// TODO Auto-generated constructor stub
 			this.tid = tid;
-			this.index = 0; 
+			this.currentPage = 0; 
 			
 		}
 		@Override
@@ -168,25 +167,19 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 			}
 		}
 		@Override
-		public boolean hasNext() throws DbException,
-				TransactionAbortedException {
-			if(index == pageNumbers){
+		public boolean hasNext() throws DbException,TransactionAbortedException {
+			if(currentPage == pageNumbers){
 				return false; 
 			}
-			index++;
-			PageId id = new HeapPageId(getId(), index);
+			currentPage++;
+			PageId id = new HeapPageId(getId(), currentPage);
 			HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, id, Permissions.READ_ONLY);
-			Iterator pageIt = p.iterator();
-			if(pageIt.hasNext()){
-				curTuple = p.iterator().next();
-				index--;
-				return true; 	
+			pageIterator = p.iterator();
+			if(!pageIterator.hasNext()){
+				return hasNext();
 			}
-			
-			else{
-				hasNext();
-			}
-			return false;
+			currentPage--;
+			return true;
 		}
 		@Override
 		public Tuple next() throws DbException, TransactionAbortedException,
