@@ -56,10 +56,8 @@ public class HeapFile implements DbFile {
      * @return an ID uniquely identifying this HeapFile.
      */
     public int getId() {
-        // some code goes her
-
+        // some code goes here
     	return f.getAbsoluteFile().hashCode();
-        
     }
 
     /**

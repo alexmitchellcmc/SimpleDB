@@ -22,7 +22,7 @@ public interface DbFile {
     /**
      * Push the specified page to disk.
      *
-     * @param p The page to write.  page.getId().pageno() specifies the offset into the file where the page should be written.
+     * @param p The page to write. page.getId().pageno() specifies the offset into the file where the page should be written.
      * @throws IOException if the write fails
      *
      */
