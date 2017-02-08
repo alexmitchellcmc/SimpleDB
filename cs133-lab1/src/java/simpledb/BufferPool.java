@@ -87,8 +87,7 @@ public class BufferPool {
     	else{
     		//find page
     		int tableid = pid.getTableId();
-        	DbFile file = Database.getCatalog().getDatabaseFile(tableid);
-        	Page pageFound = file.readPage(pid);
+    		Page pageFound = Database.getCatalog().getDatabaseFile(tableid).readPage(pid);
         	//add it to the pool and return the Page
     		pool.put(pid, pageFound);
     		return pageFound;

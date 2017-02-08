@@ -25,7 +25,7 @@ public class HeapFile implements DbFile {
 	
 	public File f; 
 	public TupleDesc td;
-	public int id; 
+	public int tableId; 
 	public Page[] pages;
 	
 	
@@ -34,7 +34,7 @@ public class HeapFile implements DbFile {
     	this.f = f;
     	this.td = td;
     	this.pages = new Page[numPages()];
-    	this.id = f.getAbsoluteFile().hashCode(); 
+    	this.tableId = f.getAbsoluteFile().hashCode(); 
     }
 
     /**
@@ -59,8 +59,8 @@ public class HeapFile implements DbFile {
      */
     public int getId() {
         // some code goes her
-
-    	return f.getAbsoluteFile().hashCode();
+    	this.tableId = f.getAbsoluteFile().hashCode();
+    	return tableId;
         
     }
 
@@ -150,7 +150,7 @@ public class HeapFile implements DbFile {
 public class HeapFileIterator<Page> implements DbFileIterator{
     	
     	public int index;
-    	public int tupleIndex; 
+    	public Iterator<Tuple> pageIt;
     	public Tuple curTuple; 
     	public int pageNumbers = numPages();
     	public int pageSize = BufferPool.PAGE_SIZE;
@@ -163,6 +163,7 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 			// TODO Auto-generated constructor stub
 			this.tid = tid;
 			this.index = 0; 
+			
 			
 		}
 		@Override
@@ -181,31 +182,35 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 			if(index == pageNumbers){
 				return false; 
 			}
+			
 			index++;
-			PageId id = new HeapPageId(getId(), index);
+			PageId id = new HeapPageId(getId(), index -1);
+			System.out.println("here");
 			HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, id, Permissions.READ_ONLY);
-			Iterator pageIt = p.iterator();
-			if(pageIt.hasNext()){
+			
+			pageIt =  p.iterator();
+			
+			if (pageIt.hasNext()){
 				curTuple = p.iterator().next();
 				index--;
 				return true; 	
 			}
 			
 			else{
-				hasNext();
+				return hasNext();
 			}
-			
-			return false;
 		}
 		@Override
 		public Tuple next() throws DbException, TransactionAbortedException,
 				NoSuchElementException {
-			// TODO Auto-generated method stub
-			return null;
+			return (Tuple) curTuple;
+			 
 		}
 		@Override
 		public void rewind() throws DbException, TransactionAbortedException {
-			// TODO Auto-generated method stub
+			index = 0; 
+			curTuple = null; 
+			pageIt = null; 
 			
 		}
 		@Override
