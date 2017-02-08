@@ -344,44 +344,44 @@ public class HeapPage implements Page {
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     private class TuplesIterator<Tuple> implements Iterator{
-    	Tuple temp;
-    	int index; 
-    	int length;
+    	
+    	public int index;
+    	public int length; 
+    	public int tuplesPerPage;
     	
     	@SuppressWarnings("unchecked")
 		TuplesIterator(){
-    		index = 0; 
-    		length = tuples.length;
-    		temp = (Tuple) tuples[index];
+    		index = 0;
+    		length = tuples.length;  
+    		tuplesPerPage = getNumTuples();
     	}
 
 		@Override
 		public boolean hasNext() {
-			if(index+1 < length){
-				return true; 
+			System.out.println(index);
+			index++;
+			if(index == length){
+				return false; 
 			}
-			
-			return false; 
-			
+		    Tuple t = (Tuple) tuples[index];
+			if(t == null){
+				return hasNext();
+			}
+			System.out.println("returning true");
+			index--;
+			return true; 
+
 		}
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public Object next() {
-			if (hasNext()){
-				temp = (Tuple) tuples[index + 1];
-				if (temp == null){
-					this.index++;
-					return null; 
-				}
-				else{
-					this.index++;
-					return temp;
-				}
-			}
-			return null; 
+		public Tuple next() {
+			System.out.println(index);
+			index++;
+			return (Tuple) tuples[index -1];
 			
 		}
+		
     }
     @SuppressWarnings("unchecked")
 	public Iterator<Tuple> iterator() {
