@@ -25,15 +25,15 @@ public class HeapFile implements DbFile {
 	
 	public File f; 
 	public TupleDesc td;
-	//public int id; 
-	public HashMap<PageId,Page> pages;
-	
+	public int id; 
+	public Page[] pages;
 	
     public HeapFile(File f, TupleDesc td) {
         // some code goes here
     	this.f = f;
     	this.td = td;
-    	this.pages = new HashMap<PageId,Page>();
+    	this.pages = new Page[numPages()];
+    	this.id = f.getAbsoluteFile().hashCode(); 
     }
 
     /**
@@ -139,13 +139,24 @@ public class HeapFile implements DbFile {
     }
 
     
-private class HeapFileIterator<Page> implements DbFileIterator{
+public class HeapFileIterator<Page> implements DbFileIterator{
     	
     	public int index;
-    	public int length; 
-    	public int tuplesPerPage;
-    	public RandomAccessFile raf; 
+    	public int tupleIndex; 
+    	public Tuple curTuple; 
+    	public int pageNumbers = numPages();
+    	public int pageSize = BufferPool.PAGE_SIZE;
+    	public TransactionId tid; 
     	
+    	
+    	//we have an array of all pages called pages 
+    	public RandomAccessFile raf; 
+		public HeapFileIterator(TransactionId tid) {
+			// TODO Auto-generated constructor stub
+			this.tid = tid;
+			this.index = 0; 
+			
+		}
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
 			// TODO Auto-generated method stub
@@ -159,8 +170,22 @@ private class HeapFileIterator<Page> implements DbFileIterator{
 		@Override
 		public boolean hasNext() throws DbException,
 				TransactionAbortedException {
-			Database.getBufferPool().getPage(tid, pid, perm)
-			// TODO Auto-generated method stub
+			if(index == pageNumbers){
+				return false; 
+			}
+			index++;
+			PageId id = new HeapPageId(getId(), index);
+			HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, id, Permissions.READ_ONLY);
+			Iterator pageIt = p.iterator();
+			if(pageIt.hasNext()){
+				curTuple = p.iterator().next();
+				index--;
+				return true; 	
+			}
+			
+			else{
+				hasNext();
+			}
 			return false;
 		}
 		@Override
@@ -177,7 +202,12 @@ private class HeapFileIterator<Page> implements DbFileIterator{
 		@Override
 		public void close() {
 			// TODO Auto-generated method stub
-			
+			try {
+				raf.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
     	
     	
@@ -186,7 +216,7 @@ private class HeapFileIterator<Page> implements DbFileIterator{
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid)  {
         // some code goes here
-        return new HeapFileIterator<Page>();
+        return new HeapFileIterator<Page>(tid);
     }
 
 }

@@ -376,7 +376,7 @@ public class HeapPage implements Page {
 		@SuppressWarnings("unchecked")
 		@Override
 		public Tuple next() {
-			System.out.println(index);
+			
 			index++;
 			return (Tuple) tuples[index -1];
 			
