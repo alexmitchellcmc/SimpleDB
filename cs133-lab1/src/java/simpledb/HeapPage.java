@@ -382,15 +382,8 @@ public class HeapPage implements Page {
 		@SuppressWarnings("unchecked")
 		@Override
 		public Tuple next() {
-			
-				if(index == -1){
-					index++;
-					return (Tuple) tuples[0];
-				}
-				else{
-					index++;
-					return (Tuple) tuples[index];
-				}
+			index++;
+			return (Tuple) tuples[index];
 		}
     }
     @SuppressWarnings("unchecked")
