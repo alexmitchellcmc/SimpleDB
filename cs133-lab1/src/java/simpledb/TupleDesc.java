@@ -52,7 +52,7 @@ public class TupleDesc implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**                
+    /**
      * Create a new TupleDesc with typeAr.length fields with fields of the
      * specified types, with associated named fields.
      * 
@@ -68,11 +68,7 @@ public class TupleDesc implements Serializable {
     
     
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
-        // some code goes here
-    	
-    	if(typeAr != null && fieldAr != null){
-    		System.out.print(typeAr.length +", "+fieldAr.length );
-    	}
+        // some code goes herez
     	this.typeAr = typeAr;  	
     	this.fieldAr = fieldAr;
     	
@@ -221,13 +217,13 @@ public class TupleDesc implements Serializable {
     		if(o instanceof TupleDesc){
     			TupleDesc temp = (TupleDesc) o;
 		    	if (this.getSize() == temp.getSize()){
-		    		//System.out.println("right size!");
+		    		System.out.println("right size!");
 		    		int counter = 0; 
 		    		Type tempType;
 		    		for (Type x : temp.typeAr){
 		    			tempType = this.typeAr[counter];
-		    			//System.out.println(tempType.toString());
-		    			//System.out.println(x.toString());
+		    			System.out.println(tempType.toString());
+		    			System.out.println(x.toString());
 		    			if(tempType == null && x != null){
 		    				return false; 
 		    			}
@@ -235,18 +231,18 @@ public class TupleDesc implements Serializable {
 		    				return false; 
 		    			}
 		    			if (!tempType.equals(x)){
-		    				//System.out.println("returning false!");
+		    				System.out.println("returning false!");
 		    				return false;
 		    			}
 		    			counter++;
 		    			
 		    		}
-		    		//System.out.println("They're equal returning true");
+		    		System.out.println("They're equal returning true");
 		    		return true; 
 		    	}
 		    	
 		    }else{
-	    		//System.out.println("o not tupleDesc returning false");
+	    		System.out.println("o not tupleDesc returning false");
 		        return false;
 		    }
     		return false;

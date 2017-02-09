@@ -372,7 +372,7 @@ public class HeapPage implements Page {
 				if(t == null){
 					return hasNext();
 				}
-				System.out.println("decrementing index");
+				//System.out.println("decrementing index");
 				index--;
 				return true; 
 			}
