@@ -358,18 +358,24 @@ public class HeapPage implements Page {
 
 		@Override
 		public boolean hasNext() {
-			System.out.println(index);
-			index++;
-			if(index == length){
-				return false; 
+			//System.out.println(index);
+			if (index == 0){
+				return true; 
 			}
-		    Tuple t = (Tuple) tuples[index];
-			if(t == null){
-				return hasNext();
+			else{
+				index++;
+				if(index == length){
+					System.out.println("no more tuples on page");
+					return false; 
+				}
+			    Tuple t = (Tuple) tuples[index];
+				if(t == null){
+					return hasNext();
+				}
+				System.out.println("decrementing index");
+				index--;
+				return true; 
 			}
-			System.out.println("returning true");
-			index--;
-			return true; 
 
 		}
 
@@ -377,8 +383,14 @@ public class HeapPage implements Page {
 		@Override
 		public Tuple next() {
 			
-			index++;
-			return (Tuple) tuples[index -1];
+				if(index == 0){
+					index++;
+					return (Tuple) tuples[0];
+				}
+				else{
+					index++;
+					return (Tuple) tuples[index - 1];
+				}
 			
 		}
 		
