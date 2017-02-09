@@ -389,11 +389,9 @@ public class HeapPage implements Page {
 				}
 				else{
 					index++;
-					return (Tuple) tuples[index - 1];
+					return (Tuple) tuples[index];
 				}
-			
 		}
-		
     }
     @SuppressWarnings("unchecked")
 	public Iterator<Tuple> iterator() {
