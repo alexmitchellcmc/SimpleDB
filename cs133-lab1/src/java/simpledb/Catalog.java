@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Catalog {
 
 	private HashMap<Integer, Table> tables;
-
 	//inner Table class containing Dbfile, name, and pkeyField, and methods to get these values
 	public static class Table  {
 		private DbFile file;
