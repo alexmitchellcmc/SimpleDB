@@ -34,13 +34,13 @@ public class BufferPool {
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
-    private HashMap<PageId,Page> pool; 
+    private HashMap<PageId, Page> pool; 
     private int numPages; 
     
     @SuppressWarnings("unchecked")
 	public BufferPool(int numPages) {
     	this.numPages = numPages;
-    	pool = new HashMap<PageId,Page>();
+    	pool = new HashMap<PageId,Page>(4096);
         // some code goes here
     }
     
@@ -73,23 +73,26 @@ public class BufferPool {
    
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
+    	
         // some code goes here
     	//if Page is in bufferpool return it
     	if(pool.containsKey(pid)){
-    		return pool.get(pid);
+    		    return pool.get(pid);
     	}
     	//otherwise go an find it in the Database
     	//if there is no space in the bufferpool throw an exception
-    	if(pool.size() == this.numPages){
-    		throw new TransactionAbortedException();
-    	}
+    	
     	//else if there is space, find the page, put it in the pool and return it
     	else{
     		//find page
+    		
     		int tableid = pid.getTableId();
+    		
     		Page pageFound = Database.getCatalog().getDatabaseFile(tableid).readPage(pid);
+    		
         	//add it to the pool and return the Page
     		pool.put(pid, pageFound);
+    		
     		return pageFound;
     	}
     }
