@@ -15,8 +15,8 @@ public class Tuple implements Serializable {
     private static final long serialVersionUID = 1L;
     private TupleDesc td; 
     private RecordId rid; 
-    private Field[] fields; 
-    private ArrayList<Field> arrayListVersion;
+    public Field[] fields; 
+    public  ArrayList<Field> arrayListVersion;
     
 
     /**
@@ -98,19 +98,65 @@ public class Tuple implements Serializable {
      * 
      * where \t is any whitespace, except newline, and \n is a newline
      */
+    
+    
     public String toString() {
         // some code goes here
     	String forReturn = new String();
     	for(Field f : fields){
     		forReturn += f.toString() + " ";
     	}
-    	forReturn = forReturn.substring(0, forReturn.length()-2);
-    	forReturn += "\n";
-    
+    	
     	return fields.toString();
     	
         //throw new UnsupportedOperationException("Implement this");
     }
+    
+private class TupleIterator<Field> implements Iterator{
+    	
+    	public int index;
+    	public int length; 
+    	public int tuplesPerPage;
+    	
+    	@SuppressWarnings("unchecked")
+		TupleIterator(){
+    		index = -1;
+    		length = fields.length;  
+    		
+    	}
+
+		@Override
+		public boolean hasNext() {
+			//System.out.println(index);
+			if (index == -1){
+				return true; 
+			}
+			else{
+				index++;
+				if(index == length){
+					//System.out.println("no more tuples on page");
+					return false; 
+				}
+			    Field t = (Field) fields[index];
+				if(t == null){
+					return hasNext();
+				}
+				//System.out.println("decrementing index");
+				index--;
+				return true; 
+			}
+		}
+			@SuppressWarnings("unchecked")
+			@Override
+			public Field next() {
+
+				index++;
+				return (Field) fields[index];
+
+			}
+		}
+
+		
     
     /**
      * @return
@@ -136,4 +182,6 @@ public class Tuple implements Serializable {
         // some code goes here
     	this.td = td; 
     }
+
+	
 }

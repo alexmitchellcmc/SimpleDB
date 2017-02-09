@@ -2,6 +2,8 @@ package simpledb;
 
 import java.util.*;
 
+import simpledb.TupleDesc.TDItem;
+
 /**
  * SeqScan is an implementation of a sequential scan access method that reads
  * each tuple of a table in no particular order (e.g., as they are laid out on
@@ -108,11 +110,11 @@ public class SeqScan implements DbIterator {
         // some code goes here
     	 TupleDesc forReturn = Database.getCatalog().getTupleDesc(tableid);
     	 
-    	 int counter = 0; 
-    	 while (counter < forReturn.fieldAr.length){
-    		 forReturn.fieldAr[counter] = this.tableAlias + "." + forReturn.getFieldName(counter);
-    		 counter++;
+    	 for(TDItem x : forReturn.tdItems){
+    		 x.fieldName = this.tableAlias + "." + x.fieldName; 
+    		 
     	 }
+    	 
     	 return forReturn; 
     }
 
