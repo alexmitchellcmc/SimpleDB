@@ -144,14 +144,8 @@ public class HeapFile implements DbFile {
     
 public class HeapFileIterator<Page> implements DbFileIterator{
     	
-<<<<<<< HEAD
     	public int index;
     	public Iterator<Tuple> pageIt;
-=======
-		public Iterator<Tuple> pageIterator;
-    	public int currentPage;
-    	public int tupleIndex; 
->>>>>>> e8a05bbf7a9d5e8bcf666eb2f8bc928dc1cf7b89
     	public Tuple curTuple; 
     	public int pageNumbers = numPages();
     	public int pageSize = BufferPool.PAGE_SIZE;
@@ -161,7 +155,7 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 		public HeapFileIterator(TransactionId tid) {
 			// TODO Auto-generated constructor stub
 			this.tid = tid;
-			this.currentPage = 0; 
+			this.index = 0; 
 			
 			
 		}
@@ -177,11 +171,9 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 		}
 		@Override
 		public boolean hasNext() throws DbException,TransactionAbortedException {
-			if(currentPage == pageNumbers){
+			if(index == pageNumbers){
 				return false; 
 			}
-<<<<<<< HEAD
-			
 			index++;
 			PageId id = new HeapPageId(getId(), index -1);
 			System.out.println("here");
@@ -198,17 +190,6 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 			else{
 				return hasNext();
 			}
-=======
-			currentPage++;
-			PageId id = new HeapPageId(getId(), currentPage);
-			HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, id, Permissions.READ_ONLY);
-			pageIterator = p.iterator();
-			if(!pageIterator.hasNext()){
-				return hasNext();
-			}
-			currentPage--;
-			return true;
->>>>>>> e8a05bbf7a9d5e8bcf666eb2f8bc928dc1cf7b89
 		}
 		@Override
 		public Tuple next() throws DbException, TransactionAbortedException,
