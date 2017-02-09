@@ -383,7 +383,7 @@ public class HeapPage implements Page {
 		@Override
 		public Tuple next() {
 			
-				if(index == 0){
+				if(index == -1){
 					index++;
 					return (Tuple) tuples[0];
 				}

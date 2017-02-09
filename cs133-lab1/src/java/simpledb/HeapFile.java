@@ -80,9 +80,7 @@ public class HeapFile implements DbFile {
     	 
     	int PageNumber = pid.pageNumber();
     	int pageSize = BufferPool.PAGE_SIZE;
-    	 
-    	
-    	
+	
 		RandomAccessFile disk;
 		byte[] page = new byte[pageSize];
 		try {
@@ -165,7 +163,7 @@ public class HeapFileIterator<Page> implements DbFileIterator{
     	HeapPage p; 
     	public int pageNumbers = numPages();
     	public int pageSize = BufferPool.PAGE_SIZE;
-    	int tupleIndex = 0; 
+    	int tupleIndex = -1; 
     	public TransactionId tid; 
     	boolean open = false; 
     	
@@ -234,7 +232,7 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 		public Tuple next() throws DbException, TransactionAbortedException,
 				NoSuchElementException {
 			
-			if(pageIt == null){
+			if(pageIt == null || !open){
 				throw new NoSuchElementException();
 			}
 			else if(pageIt.hasNext()){
@@ -244,6 +242,7 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 				return forReturn;
 			}
 			else{
+				
 				return null;
 			}
 			 
