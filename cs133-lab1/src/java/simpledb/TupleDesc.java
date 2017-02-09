@@ -39,7 +39,7 @@ public class TupleDesc implements Serializable {
    /*Our fields*/
     private ArrayList<TDItem> tdItems; 
     private Type[] typeAr; 
-    private String[] fieldAr;
+    public String[] fieldAr;
     /**
      * @return
      *        An iterator which iterates over all the field TDItems
@@ -52,7 +52,7 @@ public class TupleDesc implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
+    /**                
      * Create a new TupleDesc with typeAr.length fields with fields of the
      * specified types, with associated named fields.
      * 
@@ -69,6 +69,10 @@ public class TupleDesc implements Serializable {
     
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
         // some code goes here
+    	
+    	if(typeAr != null && fieldAr != null){
+    		System.out.print(typeAr.length +", "+fieldAr.length );
+    	}
     	this.typeAr = typeAr;  	
     	this.fieldAr = fieldAr;
     	

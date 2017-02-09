@@ -365,7 +365,7 @@ public class HeapPage implements Page {
 			else{
 				index++;
 				if(index == length){
-					System.out.println("no more tuples on page");
+					//System.out.println("no more tuples on page");
 					return false; 
 				}
 			    Tuple t = (Tuple) tuples[index];

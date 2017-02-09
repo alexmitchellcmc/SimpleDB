@@ -112,8 +112,7 @@ public class HeapFileReadTest extends SimpleDbTestBase {
         assertEquals(3, count);
         it.close();
     }
-    
-    
+
     @Test
     public void testIteratorClose() throws Exception {
         // make more than 1 page. Previous closed iterator would start fetching

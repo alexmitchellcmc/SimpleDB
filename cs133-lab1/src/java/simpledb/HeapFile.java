@@ -107,7 +107,7 @@ public class HeapFile implements DbFile {
 		
 		try {
 			HeapPage temp = new HeapPage(id,page);
-			System.out.println("returning page");
+			//System.out.println("returning page");
 			return temp;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -189,21 +189,19 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 				TransactionAbortedException {
 			 		
 			if(open){
-				System.out.print(index + ", ");
-				System.out.println(pageNumbers);
-				System.out.println("its open");
+				
 				//create a HeapPageId for page #index
 				PageId id = new HeapPageId(getId(), index);
 				//get this page from the BufferPool
 			    p = (HeapPage) Database.getBufferPool().getPage(tid, id, Permissions.READ_ONLY);
 			    //make new tuples iterator if necessary
 			    if (pageIt == null){
-			    	System.out.println("making new tuples iterator");
+			    	
 			    	this.pageIt =  p.iterator();
 			    }
 				//if there is a tuple return true
 				if (this.pageIt.hasNext()){
-					System.out.println("it has next tuple");
+					
 					return true; 	
 				}
 				//if there is not another tuple on this page go to the next page in the file
@@ -214,7 +212,7 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 				}
 				//otherwise set pageIt to null and recurse
 				else {	
-					System.out.println("recursing");
+					
 					pageIt = null;
 					return hasNext();		
 				}
@@ -234,8 +232,6 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 			else if(pageIt.hasNext()){
 				
 				Tuple forReturn = pageIt.next();
-				System.out.println("returning tuple");
-				System.out.println(forReturn);
 				return forReturn;
 			}
 			else{

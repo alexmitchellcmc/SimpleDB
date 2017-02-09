@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Catalog {
 
 	private HashMap<Integer, Table> tables;
-
 	//inner Table class containing Dbfile, name, and pkeyField, and methods to get these values
 	public static class Table  {
 		private DbFile file;
@@ -196,7 +195,7 @@ public class Catalog {
                     else if (els2[1].trim().toLowerCase().equals("string"))
                         types.add(Type.STRING_TYPE);
                     else {
-                        System.out.println("Unknown type " + els2[1]);
+                        //System.out.println("Unknown type " + els2[1]);
                         System.exit(0);
                     }
                     if (els2.length == 3) {

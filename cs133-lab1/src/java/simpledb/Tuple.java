@@ -100,6 +100,13 @@ public class Tuple implements Serializable {
      */
     public String toString() {
         // some code goes here
+    	String forReturn = new String();
+    	for(Field f : fields){
+    		forReturn += f.toString() + " ";
+    	}
+    	forReturn = forReturn.substring(0, forReturn.length()-2);
+    	forReturn += "\n";
+    
     	return fields.toString();
     	
         //throw new UnsupportedOperationException("Implement this");
