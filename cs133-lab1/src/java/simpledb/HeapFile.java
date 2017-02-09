@@ -167,16 +167,11 @@ public class HeapFileIterator<Page> implements DbFileIterator{
     	public TransactionId tid; 
     	boolean open = false; 
     	
-    	
-    	//we have an array of all pages called pages 
-    	
 		public HeapFileIterator(TransactionId tid) {
 			// TODO Auto-generated constructor stub
 			this.tid = tid;
 			this.index = 0; 
 			this.pageIt = null;
-			
-			
 		}
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
@@ -194,51 +189,53 @@ public class HeapFileIterator<Page> implements DbFileIterator{
 				TransactionAbortedException {
 			 		
 			if(open){
-
 				System.out.print(index + ", ");
 				System.out.println(pageNumbers);
 				System.out.println("its open");
-				
+				//create a HeapPageId for page #index
 				PageId id = new HeapPageId(getId(), index);
+				//get this page from the BufferPool
 			    p = (HeapPage) Database.getBufferPool().getPage(tid, id, Permissions.READ_ONLY);
-				
+			    //make new tuples iterator if necessary
 			    if (pageIt == null){
 			    	System.out.println("making new tuples iterator");
 			    	this.pageIt =  p.iterator();
 			    }
-				
+				//if there is a tuple return true
 				if (this.pageIt.hasNext()){
 					System.out.println("it has next tuple");
 					return true; 	
 				}
-				 
+				//if there is not another tuple on this page go to the next page in the file
 				index++;
+				//if the current page is larger than the number of pages in this file return false
 				if (index > pageNumbers - 1){
 					return false; 
 				}
+				//otherwise set pageIt to null and recurse
 				else {	
-					
 					System.out.println("recursing");
 					pageIt = null;
 					return hasNext();		
 				}
 			}
-			
+			//return false if iterator is not open
 			else{
 				return false; 
 			}
 		}
 		@Override
-		public Tuple next() throws DbException, TransactionAbortedException,
-				NoSuchElementException {
-			
-			if(pageIt == null || !open){
+
+		public Tuple next() throws DbException, TransactionAbortedException,NoSuchElementException {
+			if(pageIt == null){
+
 				throw new NoSuchElementException();
 			}
 			else if(pageIt.hasNext()){
 				
 				Tuple forReturn = pageIt.next();
 				System.out.println("returning tuple");
+				System.out.println(forReturn);
 				return forReturn;
 			}
 			else{

@@ -351,7 +351,7 @@ public class HeapPage implements Page {
     	
     	@SuppressWarnings("unchecked")
 		TuplesIterator(){
-    		index = 0;
+    		index = -1;
     		length = tuples.length;  
     		tuplesPerPage = getNumTuples();
     	}
@@ -359,7 +359,7 @@ public class HeapPage implements Page {
 		@Override
 		public boolean hasNext() {
 			//System.out.println(index);
-			if (index == 0){
+			if (index == -1){
 				return true; 
 			}
 			else{
@@ -382,18 +382,11 @@ public class HeapPage implements Page {
 		@SuppressWarnings("unchecked")
 		@Override
 		public Tuple next() {
-			
-				if(index == -1){
-					index++;
-					return (Tuple) tuples[0];
-				}
-				else{
-					index++;
-					return (Tuple) tuples[index - 1];
-				}
-			
+
+			index++;
+			return (Tuple) tuples[index];
+
 		}
-		
     }
     @SuppressWarnings("unchecked")
 	public Iterator<Tuple> iterator() {
