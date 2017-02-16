@@ -7,6 +7,7 @@ import java.util.*;
 public class Join extends Operator {
     private static final long serialVersionUID = 1L;
     private DbIterator child1;
+    private boolean firstTime;
     private Tuple nextChild;
     private DbIterator child2;
     private JoinPredicate p; 
@@ -25,22 +26,7 @@ public class Join extends Operator {
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
         this.p = p;
         this.child1 = child1;
-        try {
-        	this.child1.open();
-			this.nextChild = child1.next();
-		} catch (NoSuchElementException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			System.out.print(1);
-		} catch (DbException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			System.out.print(2);
-		} catch (TransactionAbortedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			System.out.print(3);
-		}
+        this.firstTime = true;
         this.child2 = child2;
         joinedTupleDesc = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
     }
@@ -115,6 +101,10 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
+    	if(this.firstTime){
+    		this.nextChild = child1.next();
+    		this.firstTime =false;
+    	}
         while (child1.hasNext()){ 
         	if(!child2.hasNext()){
         		this.nextChild = child1.next();

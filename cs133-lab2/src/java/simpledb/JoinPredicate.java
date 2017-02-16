@@ -44,7 +44,7 @@ public class JoinPredicate implements Serializable {
     	Field t1f2 = t1.getField(getField2());
     	Field t2f1 = t2.getField(getField1());
     	Field t2f2 = t2.getField(getField2());
-    	return t1f1.compare(getOperator(), t2f1);
+    	return t1f1.compare(getOperator(), t2f1) && t1f2.compare(getOperator(), t2f2);
     }
     
     public int getField1(){
