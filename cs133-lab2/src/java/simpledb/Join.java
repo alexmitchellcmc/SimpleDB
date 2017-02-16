@@ -42,8 +42,8 @@ public class Join extends Operator {
      *       alias or table name. Can be taken from the appropriate child's TupleDesc.
      * */
     public String getJoinField1Name() {
-        // some code goes here
-        return joinedTupleDesc.getFieldName(0);
+        //return joinedTupleDesc.getFieldName(0);
+    	return child1.getTupleDesc().getFieldName(0);
     }
 
     /**
@@ -53,7 +53,8 @@ public class Join extends Operator {
      * */
     public String getJoinField2Name() {
         // some code goes here
-    	return joinedTupleDesc.getFieldName(1);
+    	//return joinedTupleDesc.getFieldName(1);
+    	return child2.getTupleDesc().getFieldName(0);
     }
 
     /**
@@ -106,19 +107,23 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-    	int counter1 = 0; 
         while (child1.hasNext()){
-        	
-        	Tuple c1Tuple = child1.next();
-        	
-        	int counter2 = 0; 
+        	Tuple c1Tuple = child1.next(); 
         	while (child2.hasNext()){
         		Tuple c2Tuple = child2.next();
-        		
-        		Tuple concatonation = new Tuple(this.joinedTupleDesc);
-            	concatonation.setField(counter1, c1Tuple.getField(counter2);
-        		
+        		if(p.filter(c1Tuple, c2Tuple)){
+	        		int counter =0;
+	        		Tuple concat = new Tuple(this.joinedTupleDesc);
+	        		for(int i=0; i<c1Tuple.fields.length; i++){
+	        			concat.setField(counter, c1Tuple.getField(i));
+	        			counter++;
+	        		}
+	        		for(int i=0; i<c2Tuple.fields.length; i++){
+	        			concat.setField(counter, c2Tuple.getField(i));
+	        			counter++;
+	        		}
+	            	return concat;
+        		}
         	}
         }
         return null; 
@@ -129,8 +134,10 @@ public class Join extends Operator {
      */
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        DbIterator[] its = new DbIterator[2];
+        its[0] = this.child1;
+        its[1] = this.child2;
+        return its;
     }
 
     /**
@@ -138,7 +145,8 @@ public class Join extends Operator {
      */
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        this.child1 = children[0];
+        this.child2 = children[1];
     }
 
 }
