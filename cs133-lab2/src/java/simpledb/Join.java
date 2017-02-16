@@ -107,7 +107,21 @@ public class Join extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+    	int counter1 = 0; 
+        while (child1.hasNext()){
+        	
+        	Tuple c1Tuple = child1.next();
+        	
+        	int counter2 = 0; 
+        	while (child2.hasNext()){
+        		Tuple c2Tuple = child2.next();
+        		
+        		Tuple concatonation = new Tuple(this.joinedTupleDesc);
+            	concatonation.setField(counter1, c1Tuple.getField(counter);
+        		
+        	}
+        }
+        return null; 
     }
 
     /**
