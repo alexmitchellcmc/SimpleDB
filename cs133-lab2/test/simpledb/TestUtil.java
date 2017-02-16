@@ -139,11 +139,6 @@ public class TestUtil {
             while (actual.hasNext()) {
             	
                 Tuple next = actual.next();
-                int counter = 0;
-                for(Field f : next.fields){
-                	System.out.println(f + ", " + expectedTup.fields[counter]);
-                	counter++;
-                }
                 
                 if (compareTuples(expectedTup, next)) {
                 	//System.out.println("here");

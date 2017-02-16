@@ -1,7 +1,6 @@
 package simpledb;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -13,11 +12,10 @@ import java.util.Iterator;
 public class Tuple implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private TupleDesc td; 
-    private RecordId rid; 
-    public Field[] fields; 
-    public  ArrayList<Field> arrayListVersion;
-    
+
+    private transient RecordId rid; // source on disk -- may be null
+    private Field fields[];
+    private transient TupleDesc td;
 
     /**
      * Create a new tuple with the specified schema (type).
@@ -27,18 +25,16 @@ public class Tuple implements Serializable {
      *            instance with at least one field.
      */
     public Tuple(TupleDesc td) {
-    	this.td = td; 
-    	this.fields = new Field[td.getSize()/4];
-        // some code goes here
+        fields = new Field[td.numFields()];
+        this.td = td;
     }
 
     /**
      * @return The TupleDesc representing the schema of this tuple.
      */
     public TupleDesc getTupleDesc() {
-    	return td; 
-        // some code goes here
-        
+        return td;
+
     }
 
     /**
@@ -46,8 +42,8 @@ public class Tuple implements Serializable {
      *         be null.
      */
     public RecordId getRecordId() {
-    	//some code goes here
-        return rid; 
+        return rid;
+
     }
 
     /**
@@ -57,8 +53,7 @@ public class Tuple implements Serializable {
      *            the new RecordId for this tuple.
      */
     public void setRecordId(RecordId rid) {
-    	this.rid = rid; 
-        // some code goes here
+        this.rid = rid;
     }
 
     /**
@@ -70,14 +65,10 @@ public class Tuple implements Serializable {
      *            new value for the field.
      */
     public void setField(int i, Field f) {
-    	if(fields == null){
-    		
-    	}
-    	else{
-    		fields[i] = f;
-    	}
-    	
-        // some code goes here
+        if (f.getType() != td.getFieldType(i)) {
+            throw new RuntimeException("Invalid field type in Tuple.setField()");
+        }
+        fields[i] = f;
     }
 
     /**
@@ -87,7 +78,8 @@ public class Tuple implements Serializable {
      *            field index to return. Must be a valid index.
      */
     public Field getField(int i) {
-        return (Field) fields[i];
+        return fields[i];
+
     }
 
     /**
@@ -98,65 +90,17 @@ public class Tuple implements Serializable {
      * 
      * where \t is any whitespace, except newline, and \n is a newline
      */
-    
-    
     public String toString() {
-        // some code goes here
-    	String forReturn = new String();
-    	for(Field f : fields){
-    		forReturn += f.toString() + " ";
-    	}
-    	
-    	return fields.toString();
-    	
-        //throw new UnsupportedOperationException("Implement this");
+        String out = "";
+        for (int i = 0; i < fields.length; i++) {
+            if (out.length() > 0)
+                out += "\t";
+            out += fields[i];
+        }
+        return out;
+
     }
     
-private class TupleIterator<Field> implements Iterator{
-    	
-    	public int index;
-    	public int length; 
-    	public int tuplesPerPage;
-    	
-    	@SuppressWarnings("unchecked")
-		TupleIterator(){
-    		index = -1;
-    		length = fields.length;  
-    		
-    	}
-
-		@Override
-		public boolean hasNext() {
-			//System.out.println(index);
-			if (index == -1){
-				return true; 
-			}
-			else{
-				index++;
-				if(index == length){
-					//System.out.println("no more tuples on page");
-					return false; 
-				}
-			    Field t = (Field) fields[index];
-				if(t == null){
-					return hasNext();
-				}
-				//System.out.println("decrementing index");
-				index--;
-				return true; 
-			}
-		}
-			@SuppressWarnings("unchecked")
-			@Override
-			public Field next() {
-
-				index++;
-				return (Field) fields[index];
-
-			}
-		}
-
-		
     
     /**
      * @return
@@ -164,24 +108,15 @@ private class TupleIterator<Field> implements Iterator{
      * */
     public Iterator<Field> fields()
     {
-        // some code goes here
-    	arrayListVersion = new ArrayList<Field>();
-    	for(Field f : fields){
-    		arrayListVersion.add(f);
-    	}
-        return arrayListVersion.iterator();
-        
+        return Arrays.asList(fields).iterator();
+
     }
     
     /**
-     * Reset the TupleDesc of this tuple
-     * Does not need to worry about the fields inside the Tuple
+     * reset the TupleDesc of thi tuple
      * */
     public void resetTupleDesc(TupleDesc td)
     {
-        // some code goes here
-    	this.td = td; 
+        this.td = td;
     }
-
-	
 }

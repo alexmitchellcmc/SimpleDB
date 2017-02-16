@@ -7,10 +7,11 @@ import java.io.Serializable;
  * specific table.
  */
 public class RecordId implements Serializable {
-	private PageId pid;
-	private int tupleno;
-	
+
     private static final long serialVersionUID = 1L;
+    
+    private final PageId pid;
+    private final int tupleno;
 
     /**
      * Creates a new RecordId referring to the specified PageId and tuple
@@ -23,8 +24,8 @@ public class RecordId implements Serializable {
      */
     public RecordId(PageId pid, int tupleno) {
         // some code goes here
-    	this.pid = pid;
-    	this.tupleno = tupleno;
+        this.pid = pid;
+        this.tupleno = tupleno;
     }
 
     /**
@@ -32,7 +33,7 @@ public class RecordId implements Serializable {
      */
     public int tupleno() {
         // some code goes here
-        return this.tupleno;
+    	return tupleno;
     }
 
     /**
@@ -40,7 +41,7 @@ public class RecordId implements Serializable {
      */
     public PageId getPageId() {
         // some code goes here
-        return this.pid;
+    	return pid;
     }
 
     /**
@@ -52,14 +53,13 @@ public class RecordId implements Serializable {
     @Override
     public boolean equals(Object o) {
         // some code goes here
-    	if (o instanceof RecordId){
-    		if( this.pid.equals(((RecordId) o).getPageId()) && this.tupleno() == ((RecordId)o).tupleno()){
-    			return true;
-    		}
-    	}
-        return false;
+    	 if (o != null && o instanceof RecordId) {
+             RecordId rid = (RecordId) o;
+             return pid.equals(rid.pid) && tupleno == rid.tupleno;
+         }
+         return false;
     }
-    
+
     /**
      * You should implement the hashCode() so that two equal RecordId instances
      * (with respect to equals()) have the same hashCode().
@@ -69,8 +69,8 @@ public class RecordId implements Serializable {
     @Override
     public int hashCode() {
         // some code goes here
-    	String returnString = "" + this.tupleno() + "" + this.getPageId().pageNumber();
-    	return new Integer(returnString);
+    	return tupleno << 16 + pid.hashCode();
+
     }
 
 }

@@ -67,9 +67,10 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-    	int pageSize = BufferPool.getPageSize();
-    	int tupleSize = td.getSize();
-    	return (int) Math.floor((pageSize * 8) / (tupleSize * 8 + 1));
+        int bitsPerTupleIncludingHeader = td.getSize() * 8 + 1;
+        int tuplesPerPage = (BufferPool.PAGE_SIZE*8) / bitsPerTupleIncludingHeader; //round down
+        return tuplesPerPage;
+
     }
 
     /**
@@ -79,7 +80,11 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return (int) Math.ceil((getNumTuples()/8));
+        int tuplesPerPage = getNumTuples();
+        int hb = (tuplesPerPage / 8);
+        if (hb * 8 < tuplesPerPage) hb++;
+
+        return hb;
                  
     }
     
@@ -113,7 +118,7 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    	return this.pid;
+    	return pid;
     }
 
     /**
@@ -282,19 +287,12 @@ public class HeapPage implements Page {
      * Returns the number of empty slots on this page.
      */
     public int getNumEmptySlots() {
-        // some code goes here 	
-    	int counter = 0; 
-    	for (byte b : header){
-    		for (int i = 0; i < 8; i++){
-    			int temp =  (b & 1);
-    			if (temp == 0){
-    				counter++;
-    			}
-    			b = (byte) (b >> 1); 
-    		}
-    		
-    	}
-    	return counter; 
+        // some code goes here
+        int cnt = 0;
+        for(int i=0; i<numSlots; i++)
+            if(!isSlotUsed(i))
+                cnt++;
+        return cnt;
     }
 
     /**
@@ -302,33 +300,9 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-    	if(i > tuples.length){
-    		return false; 
-    	}
-    	
-    	int byyte = i/8;
-    	byte table = header[byyte];
-    	int biit = i % 8; 
-    	int[] arr = new int[8];
-		for(int y = 0; y < 8; y++){
-			
-			int temp = (table & 1);
-			arr[y]	= temp; 
-			table = (byte)(table >> 1);
-			
-		}
-		
-		Collections.reverse(Arrays.asList(arr));
-		
-		if(arr[biit] == 1){
-			return true;
-		}
-		else{
-			return false; 
-		}
-    	 
-    	
-    	
+        int headerbit = i % 8;
+        int headerbyte = (i - headerbit) / 8;
+        return (header[headerbyte] & (1 << headerbit)) != 0;
     }
 
     /**
@@ -343,56 +317,80 @@ public class HeapPage implements Page {
      * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
-    private class TuplesIterator<Tuple> implements Iterator{
-    	
-    	public int index;
-    	public int length; 
-    	public int tuplesPerPage;
-    	
-    	@SuppressWarnings("unchecked")
-		TuplesIterator(){
-    		index = -1;
-    		length = tuples.length;  
-    		tuplesPerPage = getNumTuples();
-    	}
-
-		@Override
-		public boolean hasNext() {
-			//System.out.println(index);
-			if (index == -1){
-				return true; 
-			}
-			else{
-				index++;
-				if(index == length){
-					//System.out.println("no more tuples on page");
-					return false; 
-				}
-			    Tuple t = (Tuple) tuples[index];
-				if(t == null){
-					return hasNext();
-				}
-				//System.out.println("decrementing index");
-				index--;
-				return true; 
-			}
-
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public Tuple next() {
-
-			index++;
-			return (Tuple) tuples[index];
-
-		}
+    public Iterator<Tuple> iterator() {
+        // some code goes here
+    	return new HeapPageIterator(this);
     }
-    @SuppressWarnings("unchecked")
-	public Iterator<Tuple> iterator() {
-        
-        return new TuplesIterator<Tuple>(); 
+    
+    // protected method used by the iterator to get the ith tuple
+    // out of this page
+    Tuple getTuple(int i) throws NoSuchElementException {
+
+        if (i >= tuples.length)
+            throw new NoSuchElementException();
+
+
+        try {
+            if(!isSlotUsed(i)) {
+                Debug.log(1, "HeapPage.getTuple: slot %d in %d:%d is not used", i, pid.getTableId(), pid.pageNumber());
+                return null;
+            }
+
+            Debug.log(1, "HeapPage.getTuple: returning tuple %d", i);
+            return tuples[i];
+
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new NoSuchElementException();
+        }
     }
 
+}
+
+/**
+ * Helper class that implements the Java Iterator for tuples on a HeapPage.
+ */
+class HeapPageIterator implements Iterator<Tuple> {
+    int curTuple = 0;
+    Tuple nextToReturn = null;
+    HeapPage p;
+
+    public HeapPageIterator(HeapPage p) {
+        this.p = p;
+    }
+
+    public boolean hasNext() {
+        if (nextToReturn != null)
+            return true;
+
+        try {
+            while (true) {
+                nextToReturn = p.getTuple(curTuple++);
+                if(nextToReturn != null)
+                    return true;
+            }
+        } catch(NoSuchElementException e) {
+            return false;
+        }
+    }
+
+    public Tuple next() {
+        Tuple next = nextToReturn;
+
+        if (next == null) {
+            if (hasNext()) {
+                next = nextToReturn;
+                nextToReturn = null;
+                return next;
+            } else
+                throw new NoSuchElementException();
+        } else {
+            nextToReturn = null;
+            return next;
+        }
+    }
+
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
 }
 

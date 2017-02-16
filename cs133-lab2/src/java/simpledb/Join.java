@@ -7,6 +7,7 @@ import java.util.*;
 public class Join extends Operator {
     private static final long serialVersionUID = 1L;
     private DbIterator child1;
+    private Tuple nextChild;
     private DbIterator child2;
     private JoinPredicate p; 
     private TupleDesc joinedTupleDesc;
@@ -24,6 +25,22 @@ public class Join extends Operator {
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
         this.p = p;
         this.child1 = child1;
+        try {
+        	this.child1.open();
+			this.nextChild = child1.next();
+		} catch (NoSuchElementException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.print(1);
+		} catch (DbException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.print(2);
+		} catch (TransactionAbortedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.print(3);
+		}
         this.child2 = child2;
         joinedTupleDesc = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
     }
@@ -98,28 +115,30 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        while (child1.hasNext()){
-        	Tuple c1Tuple = child1.next(); 
+        while (child1.hasNext()){ 
+        	if(!child2.hasNext()){
+        		this.nextChild = child1.next();
+            	child2.rewind();
+        	}
         	while (child2.hasNext()){
         		Tuple c2Tuple = child2.next();
-        		if(p.filter(c1Tuple, c2Tuple)){
+        		if(p.filter(this.nextChild, c2Tuple)){
 	        		int counter = 0;
 	        		Tuple concat = new Tuple(this.joinedTupleDesc);
-	        		for(int i=0; i<c1Tuple.fields.length; i++){
-	        			concat.setField(counter, c1Tuple.getField(i));
+	        		Iterator<Field> t1it = this.nextChild.fields();
+	        		Iterator<Field> t2it = c2Tuple.fields();
+	        		while(t1it.hasNext()){
+	        			concat.setField(counter, t1it.next());
 	        			counter++;
 	        		}
-	        		for(int i=0; i<c2Tuple.fields.length; i++){
-	        			concat.setField(counter, c2Tuple.getField(i));
+	        		while(t2it.hasNext()){
+	        			concat.setField(counter, t2it.next());
 	        			counter++;
-	        		}
-	        		System.out.println(" ");
-	        		for(Field f : concat.fields){
-	        			System.out.println(f);
 	        		}
 	            	return concat;
         		}
         	}
+        	
         }
         return null; 
     }

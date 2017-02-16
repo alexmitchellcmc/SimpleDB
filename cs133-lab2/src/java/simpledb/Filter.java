@@ -70,7 +70,6 @@ public class Filter extends Operator {
     		if(p.filter(temp)){
     			return temp;
     		}
-    		
     	}
     	return null;
     }

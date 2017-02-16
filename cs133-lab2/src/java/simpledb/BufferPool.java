@@ -1,7 +1,7 @@
 package simpledb;
 
 import java.io.*;
-import java.util.HashMap;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -19,40 +19,27 @@ public class BufferPool {
     /** Bytes per page, including header. */
     public static final int PAGE_SIZE = 4096;
 
-    private static int pageSize = PAGE_SIZE;
-
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
-
-    /** TODO for Lab 4: create your private Lock Manager class. 
-	Be sure to instantiate it in the constructor. */
+    
+    final int numPages;   // number of pages -- currently, not enforced
+    final ConcurrentHashMap<PageId,Page> pages; // hash table storing current pages in memory
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
-    private HashMap<PageId, Page> pool; 
-    private int numPages; 
-    
-    @SuppressWarnings("unchecked")
-	public BufferPool(int numPages) {
-    	this.numPages = numPages;
-    	pool = new HashMap<PageId,Page>(4096);
+    public BufferPool(int numPages) {
         // some code goes here
+    	this.numPages = numPages;
+        this.pages = new ConcurrentHashMap<PageId, Page>();
     }
     
     public static int getPageSize() {
-      return pageSize;
-    }
-
-    /**
-     * Helper: this should be used for testing only!!!
-     */
-    public static void setPageSize(int pageSize) {
-	BufferPool.pageSize = pageSize;
+      return PAGE_SIZE;
     }
 
     /**
@@ -70,32 +57,24 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
-   
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-    	
         // some code goes here
-    	//if Page is in bufferpool return it
-    	if(pool.containsKey(pid)){
-    		    return pool.get(pid);
-    	}
-    	//otherwise go an find it in the Database
-    	//if there is no space in the bufferpool throw an exception
-    	
-    	//else if there is space, find the page, put it in the pool and return it
-    	else{
-    		//find page
-    		
-    		int tableid = pid.getTableId();
-    		
-    		Page pageFound = Database.getCatalog().getDatabaseFile(tableid).readPage(pid);
-    		
-        	//add it to the pool and return the Page
-    		pool.put(pid, pageFound);
-    		
-    		return pageFound;
-    	}
+    	Page p;
+        synchronized(this) {
+            p = pages.get(pid);
+            if(p == null) {
+                if(pages.size() >= numPages) {
+                    throw new DbException("Out of buffer pages");
+                }
+                
+                p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+                pages.put(pid, p);
+            }
+        }
+        return p;
     }
+
     /**
      * Releases the lock on a page.
      * Calling this is very risky, and may result in wrong behavior. Think hard
@@ -196,7 +175,7 @@ public class BufferPool {
     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
-        // not necessary for labs 1--4
+        // only necessary for lab5
     }
 
     /**
@@ -212,7 +191,7 @@ public class BufferPool {
      */
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         // some code goes here
-        // not necessary for labs 1--4
+        // not necessary for lab1|lab2
     }
 
     /**
