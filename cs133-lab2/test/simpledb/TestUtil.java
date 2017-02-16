@@ -134,16 +134,26 @@ public class TestUtil {
             Tuple expectedTup = expected.next();
             matched = false;
             actual.rewind();
-
+         
+         
             while (actual.hasNext()) {
+            	
                 Tuple next = actual.next();
+                int counter = 0;
+                for(Field f : next.fields){
+                	System.out.println(f + ", " + expectedTup.fields[counter]);
+                	counter++;
+                }
+                
                 if (compareTuples(expectedTup, next)) {
+                	//System.out.println("here");
                     matched = true;
                     break;
                 }
             }
 
             if (!matched) {
+            	System.out.println("crashing");
                 throw new RuntimeException("expected tuple not found: " + expectedTup);
             }
         }
