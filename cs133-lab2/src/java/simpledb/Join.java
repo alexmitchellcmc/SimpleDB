@@ -117,7 +117,7 @@ public class Join extends Operator {
         		Tuple c2Tuple = child2.next();
         		
         		Tuple concatonation = new Tuple(this.joinedTupleDesc);
-            	concatonation.setField(counter1, c1Tuple.getField(counter);
+            	concatonation.setField(counter1, c1Tuple.getField(counter2);
         		
         	}
         }
