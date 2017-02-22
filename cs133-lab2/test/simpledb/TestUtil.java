@@ -141,7 +141,6 @@ public class TestUtil {
                 Tuple next = actual.next();
                 
                 if (compareTuples(expectedTup, next)) {
-                	//System.out.println("here");
                     matched = true;
                     break;
                 }
