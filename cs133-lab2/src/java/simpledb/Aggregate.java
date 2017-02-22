@@ -76,7 +76,6 @@ public class Aggregate extends Operator {
     public Aggregator.Op aggregateOp() {
 	return aop;
     }
-
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
 	return aop.toString();
     }
@@ -96,8 +95,49 @@ public class Aggregate extends Operator {
      * Hint: notice that you each Aggregator class has an iterator() method
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-	// some code goes here
-	return null;
+    	//if it is the first time calling fetchNext set nextChild to child1.next()
+    	// needs to be stored outside fetchNext() so it doesn't get overwritten every time you call the method
+    	if(this.firstTime){
+    		this.nextChild = child1.next();
+    		this.firstTime =false;
+    	}
+    	//join each tuple in child1 to each tuple in child2
+        while (true){ 
+        	//if there are no more tuples in child2
+        	if(!child2.hasNext()){
+        		//check if there are no more tuples in child1
+        		//if true break the loop because all joins have been made
+        		if(!child1.hasNext()){
+        			break;
+        		}
+        		//if child does have more tuples set nextChild to child1.next() and rewind child2
+        		else{
+	        		this.nextChild = child1.next();
+	            	child2.rewind();
+        		}
+        	}
+        	//iterate through child2's tuples and join them with nextChild tuple from child1
+        	while (child2.hasNext()){
+        		Tuple c2Tuple = child2.next();
+        		if(p.filter(this.nextChild, c2Tuple)){
+	        		int counter = 0;
+	        		Tuple concat = new Tuple(this.joinedTupleDesc);
+	        		Iterator<Field> t1it = this.nextChild.fields();
+	        		Iterator<Field> t2it = c2Tuple.fields();
+	        		while(t1it.hasNext()){
+	        			concat.setField(counter, t1it.next());
+	        			counter++;
+	        		}
+	        		while(t2it.hasNext()){
+	        			concat.setField(counter, t2it.next());
+	        			counter++;
+	        		}
+	            	return concat;
+        		}
+        	}
+        }
+        return null; 
+    }
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
