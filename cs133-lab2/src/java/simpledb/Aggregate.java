@@ -1,16 +1,16 @@
 package simpledb;
-
 import java.util.*;
-
 /**
  * The Aggregation operator that computes an aggregate (e.g., sum, avg, max,
  * min). Note that we only support aggregates over a single column, grouped by a
  * single column.
  */
 public class Aggregate extends Operator {
-
     private static final long serialVersionUID = 1L;
-
+    private DbIterator child;
+    private int afield;
+    private int gfield;
+    private Aggregator.Op aop;
     /**
      * Constructor.
      * 
@@ -30,63 +30,60 @@ public class Aggregate extends Operator {
      *            The aggregation operator to use
      */
     public Aggregate(DbIterator child, int afield, int gfield, Aggregator.Op aop) {
-	// some code goes here
+    	this.child = child;
+    	this.afield = afield;
+    	this.gfield = gfield;
+    	this.aop = aop;
     }
-
     /**
      * @return If this aggregate is accompanied by a groupby, return the groupby
      *         field index in the <b>INPUT</b> tuples. If not, return
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
-	// some code goes here
-	return -1;
+    	if(gfield == -1){
+    		return simpledb.Aggregator.NO_GROUPING;
+    	}
+    	return gfield;
     }
-
     /**
      * @return If this aggregate is accompanied by a group by, return the name
      *         of the groupby field in the <b>OUTPUT</b> tuples If not, return
      *         null;
      * */
     public String groupFieldName() {
-	// some code goes here
-	return null;
+    	if(gfield == -1){
+    		return null;
+    	}
+    	return child.getTupleDesc().getFieldName(gfield);
     }
-
     /**
      * @return the aggregate field
      * */
     public int aggregateField() {
-	// some code goes here
-	return -1;
+    	return this.afield;
     }
-
     /**
      * @return return the name of the aggregate field in the <b>OUTPUT</b>
      *         tuples
      * */
     public String aggregateFieldName() {
-	// some code goes here
-	return null;
+	return child.getTupleDesc().getFieldName(afield);
     }
-
     /**
      * @return return the aggregate operator
      * */
     public Aggregator.Op aggregateOp() {
-	// some code goes here
-	return null;
+	return aop;
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
 	return aop.toString();
     }
-
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
-	// some code goes here
+    	child.open();
     }
-
     /**
      * Returns the next tuple. If there is a group by field, then the first
      * field is the field by which we are grouping, and the second field is the
@@ -104,9 +101,8 @@ public class Aggregate extends Operator {
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-	// some code goes here
+    	child.rewind();
     }
-
     /**
      * Returns the TupleDesc of this Aggregate. If there is no group by field,
      * this will have one field - the aggregate column. If there is a group by
@@ -124,7 +120,7 @@ public class Aggregate extends Operator {
     }
 
     public void close() {
-	// some code goes here
+    	child.close();
     }
 
     /**

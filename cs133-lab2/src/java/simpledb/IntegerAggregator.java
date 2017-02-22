@@ -1,12 +1,13 @@
 package simpledb;
-
 /**
  * Computes some aggregate over a set of IntFields.
  */
 public class IntegerAggregator implements Aggregator {
-
     private static final long serialVersionUID = 1L;
-
+    private int gbfield;
+    private Type gbfieldtype;
+    private int afield;
+    private Op what;
     /**
      * Aggregate constructor
      * 
@@ -21,11 +22,12 @@ public class IntegerAggregator implements Aggregator {
      * @param what
      *            the aggregation operator
      */
-
     public IntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
-        // some code goes here
+        this.gbfield = gbfield;
+        this.gbfieldtype = gbfieldtype;
+        this.afield = afield;
+        this.what = what;
     }
-
     /**
      * Merge a new tuple into the aggregate, grouping as indicated in the
      * constructor. See Aggregator.java for more.
