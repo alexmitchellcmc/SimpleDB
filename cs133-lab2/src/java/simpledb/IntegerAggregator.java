@@ -55,7 +55,7 @@ public class IntegerAggregator implements Aggregator {
     		notGrouped(tup);
     	}
     }
-    
+    //helper to for grouped
     public void mergeGrouped(Tuple tup){
     	IntField gbf = (IntField) tup.getField(gbfield);
     	int gbval = gbf.getValue();
@@ -204,6 +204,7 @@ public class IntegerAggregator implements Aggregator {
     		}
     	}
     }
+    //helper for when not grouped
     public void notGrouped(Tuple tup){
     	int gbval = NO_GROUPING;
     	//count
@@ -374,5 +375,4 @@ public class IntegerAggregator implements Aggregator {
     public DbIterator iterator() {
         return new intAgIt();
     }
-
 }

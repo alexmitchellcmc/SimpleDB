@@ -51,6 +51,7 @@ public class StringAggregator implements Aggregator {
     		notGrouped(tup);
     	}
     }
+    //helper to merge if grouped
     public void mergeGrouped(Tuple tup){
     	IntField gbf = (IntField) tup.getField(gbfield);
     	int gbval = gbf.getValue();
@@ -79,6 +80,7 @@ public class StringAggregator implements Aggregator {
 			grouping.put(gbval, t);
     	}
     }	
+    //helper method to merge if not grouped
     public void notGrouped(Tuple tup){
     	int gbval = NO_GROUPING;
     	//if tuple is already there add 1

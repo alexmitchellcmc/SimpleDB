@@ -41,12 +41,12 @@ public class Aggregate extends Operator {
 				Tuple nextTup = child.next();
 				//get gbType of tup
 				Type gbType = nextTup.getField(gfield).getType();
-				//if afield is an intfield aggreate into IntegerAggregator
-				if(nextTup.getField(afield).getType() == Type.INT_TYPE){
+				//if afield is an intfield, make IntegerAggregator
+				if(nextTup.getField(afield).getType().equals(Type.INT_TYPE)){
 					this.intAg = new IntegerAggregator(afield, gbType, afield, aop);
 					intAg.mergeTupleIntoGroup(nextTup);
 				}
-				else if(nextTup.getField(afield).getType() == Type.STRING_TYPE){
+				else if(nextTup.getField(afield).getType().equals(Type.STRING_TYPE)){
 					this.sAg = new StringAggregator(afield, gbType, afield, aop);
 					sAg.mergeTupleIntoGroup(nextTup);
 				}
@@ -69,7 +69,7 @@ public class Aggregate extends Operator {
      * */
     public int groupField() {
     	if(gfield == -1){
-    		return simpledb.Aggregator.NO_GROUPING;
+    		return Aggregator.NO_GROUPING;
     	}
     	return gfield;
     }
