@@ -78,7 +78,7 @@ public class Aggregate extends Operator {
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
-	return aop.toString();
+	return aop.name();
     }
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
