@@ -341,7 +341,12 @@ public class IntegerAggregator implements Aggregator {
      *         the constructor.
      */
     private class intAgIt implements DbIterator{
-    	private Iterator<Tuple> it;
+    	/**
+		 * 
+		 */
+		
+		private Iterator<Tuple> it = grouping.values().iterator();
+		
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
 			it = grouping.values().iterator();
