@@ -13,6 +13,7 @@ public class Aggregate extends Operator {
     private Aggregator.Op aop;
     private IntegerAggregator intAg;
     private StringAggregator sAg;
+    private DbIterator it; 
     /**
      * Constructor.
      * 
@@ -43,12 +44,18 @@ public class Aggregate extends Operator {
 				Type gbType = nextTup.getField(gfield).getType();
 				//if afield is an intfield aggreate into IntegerAggregator
 				if(nextTup.getField(afield).getType() == Type.INT_TYPE){
-					this.intAg = new IntegerAggregator(afield, gbType, afield, aop);
+					this.intAg = new IntegerAggregator(gfield, gbType, afield, aop);
+					System.out.println(nextTup.getField(0)+" "+nextTup.getField(1));
 					intAg.mergeTupleIntoGroup(nextTup);
+					System.out.println("merged tuple");
+					
+					
 				}
 				else if(nextTup.getField(afield).getType() == Type.STRING_TYPE){
 					this.sAg = new StringAggregator(afield, gbType, afield, aop);
 					sAg.mergeTupleIntoGroup(nextTup);
+					
+					
 				}
 			}
 		} catch (NoSuchElementException e) {
@@ -61,6 +68,32 @@ public class Aggregate extends Operator {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+    	if(intAg != null){
+    		System.out.println("making iterator");
+    		this.it = intAg.iterator();
+    		try {
+    			
+				while(it.hasNext()){
+					System.out.println("in neer");
+					Tuple x = it.next();
+					System.out.println(x.getField(0) + " " + x.getField(1));
+				}
+			} catch (NoSuchElementException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (DbException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (TransactionAbortedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		
+    	}
+    	else{
+    		System.out.println("making sAg");
+    		this.it = sAg.iterator();
+    	}
     }
     /**
      * @return If this aggregate is accompanied by a groupby, return the groupby
@@ -82,7 +115,7 @@ public class Aggregate extends Operator {
     	if(gfield == -1){
     		return null;
     	}
-    	return child.getTupleDesc().getFieldName(gfield);
+    	return it.getTupleDesc().getFieldName(gfield);
     }
     /**
      * @return the aggregate field
@@ -95,21 +128,23 @@ public class Aggregate extends Operator {
      *         tuples
      * */
     public String aggregateFieldName() {
-	return child.getTupleDesc().getFieldName(afield);
+    	return null;
     }
     /**
      * @return return the aggregate operator
      * */
     public Aggregator.Op aggregateOp() {
-	return aop;
+    	return aop;
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
-	return aop.name();
+    	return aop.name();
     }
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
-    	child.open();
+    	super.open();
+    	
+    	it.open();
     }
     /**
      * Returns the next tuple. If there is a group by field, then the first
@@ -123,11 +158,24 @@ public class Aggregate extends Operator {
      * Hint: notice that you each Aggregator class has an iterator() method
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-	return null;
+    	System.out.println("here");
+    	while(it.hasNext()){
+    		
+    		Tuple x = it.next();
+    		System.out.println(x.getField(0)+" "+x.getField(1));
+    	}
+    	if(it.hasNext()){
+    		System.out.println("returning tuple");
+    		Tuple x = it.next();
+    		//System.out.println(x.getField(0)+" "+x.getField(1));
+    		return x;
+    	}
+		return null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-    	child.rewind();
+    	
+    	it.rewind();
     }
     /**
      * Returns the TupleDesc of this Aggregate. If there is no group by field,
@@ -142,11 +190,11 @@ public class Aggregate extends Operator {
      */
     public TupleDesc getTupleDesc() {
 	// some code goes here
-	return null;
+	 return it.getTupleDesc();
     }
 
     public void close() {
-    	child.close();
+    	it.close();
     }
 
     /**
@@ -167,3 +215,4 @@ public class Aggregate extends Operator {
     }
     
 }
+
