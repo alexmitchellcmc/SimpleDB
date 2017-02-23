@@ -147,6 +147,7 @@ public class AggregateTest extends SimpleDbTestBase {
    * Unit test for Aggregate.getNext() using an avg aggregate
    */
   @Test public void avgAggregate() throws Exception {
+	  System.out.println("KOBE");
     Aggregate op = new Aggregate(scan1, 1, 0,
        Aggregator.Op.AVG);
     op.open();

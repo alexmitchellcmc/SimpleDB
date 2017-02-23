@@ -15,6 +15,8 @@ public class Aggregate extends Operator {
     private StringAggregator sAg;
     private TupleIterator it; 
     private ArrayList<Tuple> list; 
+    private Type aType;
+    private Type gbType;
     /**
      * Constructor.
      * 
@@ -38,29 +40,37 @@ public class Aggregate extends Operator {
     	this.afield = afield;
     	this.gfield = gfield;
     	this.aop = aop;
-    	TupleDesc td = child.getTupleDesc();
-    	list = new ArrayList<Tuple>();
-    	
+    	this.aType = child.getTupleDesc().getFieldType(afield);
+    	if(gfield == -1){
+    		this.gbType = null;
+    	}
+    	else{
+    		this.gbType = child.getTupleDesc().getFieldType(gfield);
+    	}
+    	if(aType == Type.INT_TYPE){
+    		this.intAg = new IntegerAggregator(gfield, gbType, afield, aop);
+    	}
+    	else{
+    		this.sAg = new StringAggregator(gfield, gbType, afield, aop);
+    	}
     	try {
+    		child.open();
 			while(child.hasNext()){
 				Tuple nextTup = child.next();
-				//get gbType of tup
-				Type gbType = nextTup.getField(gfield).getType();
-				//if afield is an intfield aggreate into IntegerAggregator
-				if(nextTup.getField(afield).getType() == Type.INT_TYPE){
-					this.intAg = new IntegerAggregator(gfield, gbType, afield, aop);
-					list.add(nextTup);
+				if(this.aType == Type.INT_TYPE){
+					System.out.println("Merged: " + nextTup);
 					intAg.mergeTupleIntoGroup(nextTup);
-					
-					
-					
 				}
-				else if(nextTup.getField(afield).getType().equals(Type.STRING_TYPE)){
-					this.sAg = new StringAggregator(afield, gbType, afield, aop);
+				else {
+					System.out.println("SMerged: " + nextTup);
 					sAg.mergeTupleIntoGroup(nextTup);
-					list.add(nextTup);
-					
 				}
+			}
+			if(this.aType == Type.INT_TYPE){
+				this.it = (TupleIterator) intAg.iterator();
+			}
+			else{
+				this.it = (TupleIterator) sAg.iterator();
 			}
 		} catch (NoSuchElementException e) {
 			// TODO Auto-generated catch block
@@ -72,16 +82,7 @@ public class Aggregate extends Operator {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	if(intAg != null){
-    		System.out.println("making iterator");
-    		this.it = new TupleIterator(td,list);
-    		
-    	}
-    	else{
-    		System.out.println("making sAg");
-    		this.it = new TupleIterator(td,list);
-    	}
-    }
+	}
     /**
      * @return If this aggregate is accompanied by a groupby, return the groupby
      *         field index in the <b>INPUT</b> tuples. If not, return
@@ -123,7 +124,6 @@ public class Aggregate extends Operator {
     public Aggregator.Op aggregateOp() {
     	return aop;
     }
-
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
     	return aop.name();
     }
@@ -144,19 +144,13 @@ public class Aggregate extends Operator {
      * Hint: notice that you each Aggregator class has an iterator() method
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-    	System.out.println("here");
-    	
     	if(it.hasNext()){
-    		System.out.println("returning tuple");
     		Tuple x = it.next();
-    		//System.out.println(x.getField(0)+" "+x.getField(1));
     		return x;
     	}
 		return null;
     }
-
     public void rewind() throws DbException, TransactionAbortedException {
-    	
     	child.rewind();
     	it.rewind();
     }
@@ -175,28 +169,25 @@ public class Aggregate extends Operator {
 	// some code goes here
 	 return child.getTupleDesc();
     }
-
     public void close() {
     	super.close();
     	child.close();
     }
-
     /**
      * See Operator.java for additional notes
      */
     @Override
     public DbIterator[] getChildren() {
-	// some code goes here
-	return null;
+    	DbIterator[] its = new DbIterator[2];
+        its[0] = this.child;
+        return its;
     }
-
     /**
      * See Operator.java for additional notes
      */
     @Override
-    public void setChildren(DbIterator[] children) {
-	// some code goes here
+    public void setChildren(DbIterator[] children){
+    	this.child = children[0];
     }
-    
 }
 

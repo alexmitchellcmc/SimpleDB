@@ -9,9 +9,11 @@ public class IntegerAggregator implements Aggregator {
     private Type gbfieldtype;
     private int afield;
     private Op what;
-    private HashMap<Integer, Tuple> grouping;
-    private int countAvg;
+    private HashMap<Field, Tuple> grouping;
     private boolean grouped;
+    private TupleDesc td;
+    private HashMap<Field,Integer> countAvg;
+    private HashMap<Field,Integer> sumAvg;
     /**
      * Aggregate constructor
      * 
@@ -31,8 +33,11 @@ public class IntegerAggregator implements Aggregator {
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
         this.what = what;
-        this.grouping = new HashMap<Integer, Tuple>();
-        this.countAvg = 0;
+        this.grouping = new HashMap<Field, Tuple>();
+        if(what == Op.AVG){
+        	this.countAvg = new HashMap<Field, Integer>();
+        	this.sumAvg = new HashMap<Field, Integer>();
+        }
         if(gbfield == NO_GROUPING){
         	this.grouped = false;
         }
@@ -57,8 +62,7 @@ public class IntegerAggregator implements Aggregator {
     }
     //helper to for grouped
     public void mergeGrouped(Tuple tup){
-    	IntField gbf = (IntField) tup.getField(gbfield);
-    	int gbval = gbf.getValue();
+    	Field gbval = tup.getField(gbfield);
     	//count
     	if (what == Op.COUNT){
     		//if tuple is already there add 1
@@ -75,11 +79,11 @@ public class IntegerAggregator implements Aggregator {
     			IntField one = new IntField(1);
     			Type[] typ = new Type[2];
     			String [] f = new String[2];
-    			typ[0] = Type.INT_TYPE;
+    			typ[0] = tup.getTupleDesc().getFieldType(gbfield);
     			typ[1] = Type.INT_TYPE;
     			f[0] = gbfName;
     			f[1] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(1, one);
     			t.setField(0, tup.getField(gbfield));
@@ -87,7 +91,7 @@ public class IntegerAggregator implements Aggregator {
     		}
     	}
     	//max
-    	if (what == Op.MAX){
+    	else if (what == Op.MAX){
     		//if tuple is already there check if current tuple's afield is larger
     		if(grouping.containsKey(gbval)){
     			Tuple maxTup = grouping.get(gbval);
@@ -103,11 +107,11 @@ public class IntegerAggregator implements Aggregator {
     			String afName = tup.getTupleDesc().getFieldName(afield);
     			Type[] typ = new Type[2];
     			String [] f = new String[2];
-    			typ[0] = Type.INT_TYPE;
+    			typ[0] = tup.getTupleDesc().getFieldType(gbfield);
     			typ[1] = Type.INT_TYPE;
     			f[0] = gbfName;
     			f[1] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(1, tup.getField(afield));
     			t.setField(0, tup.getField(gbfield));
@@ -115,7 +119,7 @@ public class IntegerAggregator implements Aggregator {
     		}
     	}
     	//min
-    	if (what == Op.MIN){
+    	else if (what == Op.MIN){
     		//if tuple is already check if current tuple's afield is smaller
     		if(grouping.containsKey(gbval)){
     			Tuple minTup = grouping.get(gbval);
@@ -131,11 +135,11 @@ public class IntegerAggregator implements Aggregator {
     			String afName = tup.getTupleDesc().getFieldName(afield);
     			Type[] typ = new Type[2];
     			String [] f = new String[2];
-    			typ[0] = Type.INT_TYPE;
+    			typ[0] = tup.getTupleDesc().getFieldType(gbfield);
     			typ[1] = Type.INT_TYPE;
     			f[0] = gbfName;
     			f[1] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(1, tup.getField(afield));
     			t.setField(0, tup.getField(gbfield));
@@ -143,7 +147,7 @@ public class IntegerAggregator implements Aggregator {
     		}
     	}
     	//sum
-    	if (what == Op.SUM){
+    	else if (what == Op.SUM){
     		//if tuple is already there add current tuples field to it
     		if(grouping.containsKey(gbval)){
     			Tuple sumTup = grouping.get(gbval);
@@ -159,11 +163,11 @@ public class IntegerAggregator implements Aggregator {
     			String afName = tup.getTupleDesc().getFieldName(afield);
     			Type[] typ = new Type[2];
     			String [] f = new String[2];
-    			typ[0] = Type.INT_TYPE;
+    			typ[0] = tup.getTupleDesc().getFieldType(gbfield);
     			typ[1] = Type.INT_TYPE;
     			f[0] = gbfName;
     			f[1] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(1, tup.getField(afield));
     			t.setField(0, tup.getField(gbfield));
@@ -171,18 +175,21 @@ public class IntegerAggregator implements Aggregator {
     		}
     	}
     	//avg
-    	if(what == Op.AVG){
+    	else if(what == Op.AVG){
     		//if tuple is already there calc new avg
     		if(grouping.containsKey(gbval)){
     			Tuple avgTup = grouping.get(gbval);
-    			int avgTupAgVal = ((IntField)avgTup.getField(1)).getValue();
-    			int oldSum = avgTupAgVal * this.countAvg;
+    			int curSum = this.sumAvg.get(gbval);
+    			int curCount = this.countAvg.get(gbval);
     			int curAgVal = ((IntField)tup.getField(afield)).getValue();
-    			int newSum = oldSum + curAgVal;
-    			this.countAvg++;
-    			int newAvg = newSum/this.countAvg;
+    			curSum += curAgVal;
+    			curCount++;
+    			this.countAvg.put(gbval, curCount);
+    			this.sumAvg.put(gbval, curSum);
+    			int newAvg = curSum/curCount;
     			IntField avg = new IntField(newAvg);
     			avgTup.setField(1, avg );
+    			System.out.println("New Avg: " + avgTup);
     			grouping.put(gbval, avgTup);
     		}
     		//if tuple is not there put it there
@@ -191,22 +198,23 @@ public class IntegerAggregator implements Aggregator {
     			String afName = tup.getTupleDesc().getFieldName(afield);
     			Type[] typ = new Type[2];
     			String [] f = new String[2];
-    			typ[0] = Type.INT_TYPE;
+    			typ[0] = tup.getTupleDesc().getFieldType(gbfield);
     			typ[1] = Type.INT_TYPE;
     			f[0] = gbfName;
     			f[1] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(1, tup.getField(afield));
     			t.setField(0, tup.getField(gbfield));
     			grouping.put(gbval, t);
-    			this.countAvg++;
+    			this.countAvg.put(gbval, 1);
+    			this.sumAvg.put(gbval, ((IntField)tup.getField(afield)).getValue());
     		}
     	}
     }
     //helper for when not grouped
     public void notGrouped(Tuple tup){
-    	int gbval = NO_GROUPING;
+    	Field gbval = new IntField(-1);
     	//count
     	if (what == Op.COUNT){
     		//if tuple is already there add 1
@@ -224,7 +232,7 @@ public class IntegerAggregator implements Aggregator {
     			String [] f = new String[1];
     			typ[0] = Type.INT_TYPE;
     			f[0] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(0, one);
     			grouping.put(gbval, t);
@@ -248,7 +256,7 @@ public class IntegerAggregator implements Aggregator {
     			String [] f = new String[1];
     			typ[0] = Type.INT_TYPE;
     			f[0] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(0, tup.getField(afield));
     			grouping.put(gbval, t);
@@ -272,7 +280,7 @@ public class IntegerAggregator implements Aggregator {
     			String [] f = new String[1];
     			typ[0] = Type.INT_TYPE;
     			f[0] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(0, tup.getField(afield));
     			grouping.put(gbval, t);
@@ -296,7 +304,7 @@ public class IntegerAggregator implements Aggregator {
     			String [] f = new String[1];
     			typ[0] = Type.INT_TYPE;
     			f[0] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(0, tup.getField(afield));
     			grouping.put(gbval, t);
@@ -307,12 +315,14 @@ public class IntegerAggregator implements Aggregator {
     		//if tuple is already there calc new avg
     		if(grouping.containsKey(gbval)){
     			Tuple avgTup = grouping.get(gbval);
-    			int avgTupAgVal = ((IntField)avgTup.getField(0)).getValue();
-    			int oldSum = avgTupAgVal * this.countAvg;
+    			int curSum = this.sumAvg.get(gbval);
+    			int curCount = this.countAvg.get(gbval);
     			int curAgVal = ((IntField)tup.getField(afield)).getValue();
-    			int newSum = oldSum + curAgVal;
-    			this.countAvg++;
-    			int newAvg = newSum/this.countAvg;
+    			curSum += curAgVal;
+    			curCount++;
+    			this.countAvg.put(gbval, curCount);
+    			this.sumAvg.put(gbval, curSum);
+    			int newAvg = curSum/curCount;
     			IntField avg = new IntField(newAvg);
     			avgTup.setField(0, avg );
     			grouping.put(gbval, avgTup);
@@ -324,11 +334,12 @@ public class IntegerAggregator implements Aggregator {
     			String [] f = new String[1];
     			typ[0] = Type.INT_TYPE;
     			f[0] = afName;
-    			TupleDesc td = new TupleDesc(typ, f);
+    			this.td = new TupleDesc(typ, f);
     			Tuple t = new Tuple(td);
     			t.setField(0, tup.getField(afield));
     			grouping.put(gbval, t);
-    			this.countAvg++;
+    			this.countAvg.put(gbval, 1);
+    			this.sumAvg.put(gbval, ((IntField)tup.getField(afield)).getValue());
     		}
     	}
     }
@@ -340,44 +351,7 @@ public class IntegerAggregator implements Aggregator {
      *         aggregateVal is determined by the type of aggregate specified in
      *         the constructor.
      */
-    private class intAgIt implements DbIterator{
-    	/**
-		 * 
-		 */
-		
-		private Iterator<Tuple> it = grouping.values().iterator();
-		
-		@Override
-		public void open() throws DbException, TransactionAbortedException {
-			it = grouping.values().iterator();
-		}
-		@Override
-		public boolean hasNext() throws DbException, TransactionAbortedException {
-			// TODO Auto-generated method stub
-			return it.hasNext();
-		}
-		@Override
-		public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
-			// TODO Auto-generated method stub
-			return it.next();
-		}
-		@Override
-		public void rewind() throws DbException, TransactionAbortedException {
-			// TODO Auto-generated method stub
-			it = grouping.values().iterator();
-		}
-		@Override
-		public TupleDesc getTupleDesc() {
-			// TODO Auto-generated method stub
-			return grouping.get(gbfield).getTupleDesc();
-		}
-		@Override
-		public void close() {
-			// TODO Auto-generated method stub
-			it = null;
-		}
-    }
     public DbIterator iterator() {
-        return new intAgIt();
+        return new TupleIterator(this.td, this.grouping.values());
     }
 }

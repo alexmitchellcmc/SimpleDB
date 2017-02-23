@@ -11,8 +11,9 @@ public class StringAggregator implements Aggregator {
     private Type gbfieldtype;
     private int afield;
     private Op what;
-    private HashMap<Integer, Tuple> grouping;
+    private HashMap<Field, Tuple> grouping;
     private boolean grouped;
+    private TupleDesc td;
     /**
      * Aggregate constructor
      * @param gbfield the 0-based index of the group-by field in the tuple, or NO_GROUPING if there is no grouping
@@ -25,7 +26,7 @@ public class StringAggregator implements Aggregator {
     	this.gbfield = gbfield;
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
-        this.grouping = new HashMap<Integer, Tuple>();
+        this.grouping = new HashMap<Field, Tuple>();
         if(what != Op.COUNT){
         	throw new IllegalArgumentException("Invalid operator");
         }
@@ -53,8 +54,7 @@ public class StringAggregator implements Aggregator {
     }
     //helper to merge if grouped
     public void mergeGrouped(Tuple tup){
-    	IntField gbf = (IntField) tup.getField(gbfield);
-    	int gbval = gbf.getValue();
+    	Field gbval = tup.getField(gbfield);
     	//if tuple is already there add 1
     	if(grouping.containsKey(gbval)){
     		Tuple countTup = grouping.get(gbval);
@@ -69,11 +69,11 @@ public class StringAggregator implements Aggregator {
 			IntField one = new IntField(1);
 			Type[] typ = new Type[2];
 			String [] f = new String[2];
-			typ[0] = Type.INT_TYPE;
+			typ[0] = tup.getField(gbfield).getType();
 			typ[1] = Type.INT_TYPE;
 			f[0] = gbfName;
 			f[1] = afName;
-			TupleDesc td = new TupleDesc(typ, f);
+			td = new TupleDesc(typ, f);
 			Tuple t = new Tuple(td);
 			t.setField(1, one);
 			t.setField(0, tup.getField(gbfield));
@@ -82,7 +82,7 @@ public class StringAggregator implements Aggregator {
     }	
     //helper method to merge if not grouped
     public void notGrouped(Tuple tup){
-    	int gbval = NO_GROUPING;
+    	Field gbval = new IntField(-1);
     	//if tuple is already there add 1
     	if(grouping.containsKey(gbval)){
     		Tuple countTup = grouping.get(gbval);
@@ -98,7 +98,7 @@ public class StringAggregator implements Aggregator {
 			String [] f = new String[2];
 			typ[0] = Type.INT_TYPE;
 			f[0] = afName;
-			TupleDesc td = new TupleDesc(typ, f);
+			td = new TupleDesc(typ, f);
 			Tuple t = new Tuple(td);
 			t.setField(0, one);
 			grouping.put(gbval, t);
@@ -112,39 +112,7 @@ public class StringAggregator implements Aggregator {
      *   grouping. The aggregateVal is determined by the type of
      *   aggregate specified in the constructor.
      */
-    private class StringAgIt implements DbIterator{
-    	private Iterator<Tuple> it;
-		@Override
-		public void open() throws DbException, TransactionAbortedException {
-			it = grouping.values().iterator();
-		}
-		@Override
-		public boolean hasNext() throws DbException, TransactionAbortedException {
-			// TODO Auto-generated method stub
-			return it.hasNext();
-		}
-		@Override
-		public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
-			// TODO Auto-generated method stub
-			return it.next();
-		}
-		@Override
-		public void rewind() throws DbException, TransactionAbortedException {
-			// TODO Auto-generated method stub
-			it = grouping.values().iterator();
-		}
-		@Override
-		public TupleDesc getTupleDesc() {
-			// TODO Auto-generated method stub
-			return grouping.get(gbfield).getTupleDesc();
-		}
-		@Override
-		public void close() {
-			// TODO Auto-generated method stub
-			it = null;
-		}
-    }
     public DbIterator iterator() {
-        return new StringAgIt();
+        return new TupleIterator(this.td,this.grouping.values());
     }
 }
