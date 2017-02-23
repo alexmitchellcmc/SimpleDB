@@ -61,9 +61,20 @@ public class IntegerAggregator implements Aggregator {
     		}
     		//if tuple is not there put it there
     		else{
+    			String gbfName = tup.getTupleDesc().getFieldName(gbfield);
+    			String afName = tup.getTupleDesc().getFieldName(afield);
     			IntField one = new IntField(1);
-    			tup.setField(afield, one);
-    			grouping.put(gbval, tup);
+    			Type[] typ = new Type[2];
+    			String [] f = new String[2];
+    			typ[0] = Type.INT_TYPE;
+    			typ[1] = Type.INT_TYPE;
+    			f[0] = gbfName;
+    			f[1] = afName;
+    			TupleDesc td = new TupleDesc(typ, f);
+    			Tuple t = new Tuple(td);
+    			t.setField(1, one);
+    			t.setField(0, tup.getField(gbfield));
+    			grouping.put(gbval, t);
     		}
     	}
     	//max
@@ -79,7 +90,19 @@ public class IntegerAggregator implements Aggregator {
     		}
     		//if tuple is not there put it there
     		else{
-    			grouping.put(gbval, tup);
+    			String gbfName = tup.getTupleDesc().getFieldName(gbfield);
+    			String afName = tup.getTupleDesc().getFieldName(afield);
+    			Type[] typ = new Type[2];
+    			String [] f = new String[2];
+    			typ[0] = Type.INT_TYPE;
+    			typ[1] = Type.INT_TYPE;
+    			f[0] = gbfName;
+    			f[1] = afName;
+    			TupleDesc td = new TupleDesc(typ, f);
+    			Tuple t = new Tuple(td);
+    			t.setField(1, tup.getField(afield));
+    			t.setField(0, tup.getField(gbfield));
+    			grouping.put(gbval, t);
     		}
     	}
     	//min
@@ -95,7 +118,19 @@ public class IntegerAggregator implements Aggregator {
     		}
     		//if tuple is not there put it there
     		else{
-    			grouping.put(gbval, tup);
+    			String gbfName = tup.getTupleDesc().getFieldName(gbfield);
+    			String afName = tup.getTupleDesc().getFieldName(afield);
+    			Type[] typ = new Type[2];
+    			String [] f = new String[2];
+    			typ[0] = Type.INT_TYPE;
+    			typ[1] = Type.INT_TYPE;
+    			f[0] = gbfName;
+    			f[1] = afName;
+    			TupleDesc td = new TupleDesc(typ, f);
+    			Tuple t = new Tuple(td);
+    			t.setField(1, tup.getField(afield));
+    			t.setField(0, tup.getField(gbfield));
+    			grouping.put(gbval, t);
     		}
     	}
     	//sum
@@ -111,7 +146,19 @@ public class IntegerAggregator implements Aggregator {
     		}
     		//if tuple is not there put it there
     		else{
-    			grouping.put(gbval, tup);
+    			String gbfName = tup.getTupleDesc().getFieldName(gbfield);
+    			String afName = tup.getTupleDesc().getFieldName(afield);
+    			Type[] typ = new Type[2];
+    			String [] f = new String[2];
+    			typ[0] = Type.INT_TYPE;
+    			typ[1] = Type.INT_TYPE;
+    			f[0] = gbfName;
+    			f[1] = afName;
+    			TupleDesc td = new TupleDesc(typ, f);
+    			Tuple t = new Tuple(td);
+    			t.setField(1, tup.getField(afield));
+    			t.setField(0, tup.getField(gbfield));
+    			grouping.put(gbval, t);
     		}
     	}
     	//avg
@@ -131,7 +178,19 @@ public class IntegerAggregator implements Aggregator {
     		}
     		//if tuple is not there put it there
     		else{
-    			grouping.put(gbval, tup);
+    			String gbfName = tup.getTupleDesc().getFieldName(gbfield);
+    			String afName = tup.getTupleDesc().getFieldName(afield);
+    			Type[] typ = new Type[2];
+    			String [] f = new String[2];
+    			typ[0] = Type.INT_TYPE;
+    			typ[1] = Type.INT_TYPE;
+    			f[0] = gbfName;
+    			f[1] = afName;
+    			TupleDesc td = new TupleDesc(typ, f);
+    			Tuple t = new Tuple(td);
+    			t.setField(1, tup.getField(afield));
+    			t.setField(0, tup.getField(gbfield));
+    			grouping.put(gbval, t);
     			this.countAvg++;
     		}
     	}

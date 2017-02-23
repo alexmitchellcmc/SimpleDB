@@ -55,22 +55,20 @@ public class StringAggregator implements Aggregator {
 		}
 		//if tuple is not there put it there
 		else{
+			String gbfName = tup.getTupleDesc().getFieldName(gbfield);
+			String afName = tup.getTupleDesc().getFieldName(afield);
 			IntField one = new IntField(1);
-			Type[] typ = new Type[tup.getTupleDesc().numFields()];
-			typ[afield] = Type.INT_TYPE;
-			typ[gbfield] = Type.INT_TYPE;
-			String [] f = new String[tup.getTupleDesc().numFields()];
-			Iterator<Field> fs = tup.fields();
-			int count = 0;
-			while(fs.hasNext()){
-				if(count != afield){
-					f[count] = fs.next();
-				}
-				count++;
-			}
-			TupleDesc td = new TupleDesc(typ,f);
-			tup.setField(afield, one);
-			grouping.put(gbval, tup);
+			Type[] typ = new Type[2];
+			String [] f = new String[2];
+			typ[0] = Type.INT_TYPE;
+			typ[1] = Type.INT_TYPE;
+			f[0] = gbfName;
+			f[1] = afName;
+			TupleDesc td = new TupleDesc(typ, f);
+			Tuple t = new Tuple(td);
+			t.setField(1, one);
+			t.setField(0, tup.getField(gbfield));
+			grouping.put(gbval, t);
 		}
     }
 
