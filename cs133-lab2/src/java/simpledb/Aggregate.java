@@ -11,6 +11,8 @@ public class Aggregate extends Operator {
     private int afield;
     private int gfield;
     private Aggregator.Op aop;
+    private IntegerAggregator intAg;
+    private StringAggregator sAg;
     /**
      * Constructor.
      * 
@@ -34,6 +36,31 @@ public class Aggregate extends Operator {
     	this.afield = afield;
     	this.gfield = gfield;
     	this.aop = aop;
+    	try {
+			while(child.hasNext()){
+				Tuple nextTup = child.next();
+				//get gbType of tup
+				Type gbType = nextTup.getField(gfield).getType();
+				//if afield is an intfield aggreate into IntegerAggregator
+				if(nextTup.getField(afield).getType() == Type.INT_TYPE){
+					this.intAg = new IntegerAggregator(afield, gbType, afield, aop);
+					intAg.mergeTupleIntoGroup(nextTup);
+				}
+				else if(nextTup.getField(afield).getType() == Type.STRING_TYPE){
+					this.sAg = new StringAggregator(afield, gbType, afield, aop);
+					sAg.mergeTupleIntoGroup(nextTup);
+				}
+			}
+		} catch (NoSuchElementException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DbException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     /**
      * @return If this aggregate is accompanied by a groupby, return the groupby
