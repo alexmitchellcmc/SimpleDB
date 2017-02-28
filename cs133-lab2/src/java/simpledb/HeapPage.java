@@ -45,6 +45,7 @@ public class HeapPage implements Page {
         this.pid = id;
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
+        this.dirty = false;
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
 
         // allocate and read the header slots of this page
@@ -253,17 +254,19 @@ public class HeapPage implements Page {
      */
     public void deleteTuple(Tuple t) throws DbException {
     	//lab 2
-    	if(tuples == null){
-    		throw new DbException(null);
-    	}
-    	
-    	int indexToDelete = t.getRecordId().tupleno();
-    	tuples[indexToDelete] = null;
-    	markSlotUsed(indexToDelete, false);
-    	
 
-        		
-        	
+    	int indexToDelete = t.getRecordId().tupleno();
+    	if (indexToDelete > tuples.length){
+    		throw new DbException("no tuple to delete");
+    	}
+    	if (!this.isSlotUsed(indexToDelete)){
+    		throw new DbException("no tuple to delete");
+    	}
+    	else {
+    		tuples[indexToDelete] = null;
+    		this.markSlotUsed(indexToDelete,false);
+    	}
+ 	
       }
         
     
