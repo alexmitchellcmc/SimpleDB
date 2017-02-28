@@ -18,9 +18,12 @@ public class HeapPage implements Page {
     final byte header[];
     final Tuple tuples[];
     final int numSlots;
+    
 
     byte[] oldData;
     private final Byte oldDataLock=new Byte((byte)0);
+    private TransactionId transactionDirty;
+	private boolean dirty; 
 
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
@@ -249,8 +252,15 @@ public class HeapPage implements Page {
      * @param t The tuple to delete
      */
     public void deleteTuple(Tuple t) throws DbException {
-        // some code goes here
-        // not necessary for lab1
+    	int counter = 0; 
+        for(Tuple tup : this.tuples){
+        	if(t.equals(tup)){
+        		tuples[counter] = null;
+        		markSlotUsed(counter,true);
+        	}
+        	counter++;
+        }
+        
     }
 
     /**
@@ -263,6 +273,10 @@ public class HeapPage implements Page {
     public void insertTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+    	int numSlotsFree = getNumEmptySlots();
+    	if(numSlotsFree > 0){
+    		
+    	}
     }
 
     /**
@@ -272,6 +286,8 @@ public class HeapPage implements Page {
     public void markDirty(boolean dirty, TransactionId tid) {
         // some code goes here
 	// not necessary for lab1
+    	transactionDirty = tid; 
+    	this.dirty = dirty;
     }
 
     /**
@@ -280,7 +296,7 @@ public class HeapPage implements Page {
     public TransactionId isDirty() {
         // some code goes here
 	// Not necessary for lab1
-        return null;      
+        return transactionDirty;   
     }
 
     /**

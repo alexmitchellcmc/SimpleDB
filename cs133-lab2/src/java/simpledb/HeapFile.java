@@ -108,9 +108,12 @@ public class HeapFile implements DbFile {
     public void writePage(Page page) throws IOException {
         // some code goes here
         // not necessary for lab1
+    	
     }
 
-    /**
+    
+
+	/**
      * Returns the number of pages in this HeapFile.
      */
     public int numPages() {
