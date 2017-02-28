@@ -1,5 +1,7 @@
 package simpledb;
 
+import java.io.IOException;
+
 /**
  * Inserts tuples read from the child operator into the tableid specified in the
  * constructor
@@ -7,7 +9,10 @@ package simpledb;
 public class Insert extends Operator {
 
     private static final long serialVersionUID = 1L;
-
+    private DbIterator child;
+    private TransactionId t;
+    private int tableid;
+    private boolean firstTime;
     /**
      * Constructor.
      * 
@@ -21,29 +26,31 @@ public class Insert extends Operator {
      *             if TupleDesc of child differs from table into which we are to
      *             insert.
      */
-    public Insert(TransactionId t,DbIterator child, int tableid)
-            throws DbException {
-        // some code goes here
+    public Insert(TransactionId t,DbIterator child, int tableid){
+    	this.t = t;
+    	this.child = child;
+    	this.tableid = tableid;
+    	this.firstTime = true;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return this.child.getTupleDesc();
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+        child.open();
     }
 
     public void close() {
-        // some code goes here
+        child.close();
     }
 
     /**
      * You can just close and then open the child
      */
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        child.close();
+        child.open();
     }
 
     /**
@@ -64,18 +71,40 @@ public class Insert extends Operator {
      * @see BufferPool#insertTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        if(firstTime){
+        	int numRecords = 0;
+        	while(child.hasNext()){
+        		Tuple next = child.next();
+        		try {
+					Database.getBufferPool().insertTuple(t, tableid, next);
+					numRecords++;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+        	}
+        	Type[] typ = new Type[1];
+        	typ[0] = Type.INT_TYPE;
+        	TupleDesc td = new TupleDesc(typ);
+        	Tuple tup = new Tuple(td);
+        	IntField field = new IntField(numRecords);
+        	tup.setField(0, field);
+        	return tup;
+        }
+        else{
+        	return null;
+        }
     }
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+    	DbIterator[] its = new DbIterator[1];
+        its[0] = this.child;
+        return its;
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+    	this.child = children[0];
     }
 }

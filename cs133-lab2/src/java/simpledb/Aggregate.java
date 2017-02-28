@@ -178,7 +178,7 @@ public class Aggregate extends Operator {
      */
     @Override
     public DbIterator[] getChildren() {
-    	DbIterator[] its = new DbIterator[2];
+    	DbIterator[] its = new DbIterator[1];
         its[0] = this.child;
         return its;
     }
