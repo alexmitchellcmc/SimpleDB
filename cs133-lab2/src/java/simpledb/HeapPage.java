@@ -252,16 +252,21 @@ public class HeapPage implements Page {
      * @param t The tuple to delete
      */
     public void deleteTuple(Tuple t) throws DbException {
-    	int counter = 0; 
-        for(Tuple tup : this.tuples){
-        	if(t.equals(tup)){
-        		tuples[counter] = null;
-        		markSlotUsed(counter,true);
-        	}
-        	counter++;
-        }
+    	//lab 2
+    	if(tuples == null){
+    		throw new DbException(null);
+    	}
+    	
+    	int indexToDelete = t.getRecordId().tupleno();
+    	tuples[indexToDelete] = null;
+    	markSlotUsed(indexToDelete, false);
+    	
+
+        		
+        	
+      }
         
-    }
+    
 
     /**
      * Adds the specified tuple to the page;  the tuple should be updated to reflect
@@ -275,7 +280,15 @@ public class HeapPage implements Page {
         // not necessary for lab1
     	int numSlotsFree = getNumEmptySlots();
     	if(numSlotsFree > 0){
-    		
+    		int counter = 0; 
+    		for(Tuple tup : tuples){
+    			if(tup == null){
+    				tuples[counter] = t; 
+    				this.markSlotUsed(counter, true);
+    				
+    			}
+    			counter++;
+    		}
     	}
     }
 
@@ -316,6 +329,7 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
+    	
         int headerbit = i % 8;
         int headerbyte = (i - headerbit) / 8;
         return (header[headerbyte] & (1 << headerbit)) != 0;
@@ -327,6 +341,20 @@ public class HeapPage implements Page {
     private void markSlotUsed(int i, boolean value) {
         // some code goes here
         // not necessary for lab1
+    	int headerbit = i % 8;
+        int headerbyte = (i - headerbit) / 8;
+        if(value){
+	        int temp = header[headerbyte];
+	        int toAdd  =  temp |  (1 << headerbit) ;
+	        header[headerbyte] = (byte) toAdd; 
+        }
+        else{
+        	int temp = header[headerbyte];
+	        int toAdd  =  temp &  (~(1 << headerbit)) ;
+	        header[headerbyte] = (byte) toAdd; 
+        	
+        }
+        
     }
 
     /**
