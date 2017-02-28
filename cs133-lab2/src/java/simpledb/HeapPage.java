@@ -46,6 +46,7 @@ public class HeapPage implements Page {
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
         this.dirty = false;
+        this.transactionDirty = null;
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
 
         // allocate and read the header slots of this page
@@ -286,20 +287,30 @@ public class HeapPage implements Page {
         // some code goes here
         // not necessary for lab1
     	int numSlotsFree = getNumEmptySlots();
-    	if(t == null || tuples == null || this.td == null){
+    	int tupleIndexToInsert = t.getRecordId().tupleno();
+    	
+    	if (t == null || tuples == null || this.td == null){
     		throw new DbException("couldn't insert tuple");
     	}
-    	if ((!t.getTupleDesc().equals(this.td)) || numSlotsFree == 0 ){
+    	
+    	if ((!t.getTupleDesc().equals(this.td)) || numSlotsFree == 0 || tuples.length < tupleIndexToInsert  ){
+    		
     		throw new DbException("couldn't insert tuple");
     	}	
-		
+
 		for (int i = 0; i < tuples.length; i++){
-			if(tuples[i] == null){
-				tuples[i] = t; 
+
+			if(tuples[i] == null){	
+				RecordId rid = new RecordId(this.pid, i);
+				t.setRecordId(rid);
+				tuples[i] = t; 				
 				this.markSlotUsed(i, true);
+				break;
+				
 			}
-		}	
-		
+	
+		}
+
     }
 
     /**
@@ -319,7 +330,12 @@ public class HeapPage implements Page {
     public TransactionId isDirty() {
         // some code goes here
 	// Not necessary for lab1
-        return transactionDirty;   
+    	if(dirty == false){
+    		return null;
+    	}
+    	else{
+    		return transactionDirty;  
+    	}
     }
 
     /**
