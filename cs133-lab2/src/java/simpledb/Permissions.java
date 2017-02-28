@@ -8,7 +8,7 @@ package simpledb;
 public class Permissions {
   int permLevel;
 
-  private Permissions(int permLevel) {
+  Permissions(int permLevel) {
     this.permLevel = permLevel;
   }
 

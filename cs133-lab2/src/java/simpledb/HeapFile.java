@@ -109,6 +109,10 @@ public class HeapFile implements DbFile {
         // some code goes here
         // not necessary for lab1
     	
+    	byte[] pageRet = HeapPage.createEmptyPageData();
+    	pageRet = page.getPageData();
+    	
+    	
     }
 
     
@@ -122,10 +126,31 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
+    
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-        return null;
+    	if(t == null || tid == null){
+    		System.out.println("here");
+    		throw new NullPointerException("ahh");
+    	}
+    	PageId pid = t.getRecordId().getPageId();
+    	BufferPool buf = Database.getBufferPool();
+    	Permissions perm = new Permissions(this.tableid);
+    	if(t.getRecordId().getPageId() == null){
+    		System.out.println("h");
+    	}
+    	if(tid == null){
+    		System.out.println("he");
+    	}
+    	
+    	buf.getPage(tid, t.getRecordId().getPageId(), perm);
+    	
+    	HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), perm );
+    	p.insertTuple(t);
+    	ArrayList<Page> modifiedPages = new ArrayList<Page>();
+    	modifiedPages.add(p);
+    	return modifiedPages;
         // not necessary for lab1
     }
 
@@ -133,7 +158,15 @@ public class HeapFile implements DbFile {
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
         // some code goes here
-        return null;
+    	
+    	if(t == null || tid == null){
+    		throw new DbException("");
+    	}
+    	HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), null );
+    	p.deleteTuple(t);
+    	ArrayList<Page> modifiedPages = new ArrayList<Page>();
+    	modifiedPages.add(p);
+    	return modifiedPages;
         // not necessary for lab1
     }
 
