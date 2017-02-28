@@ -254,7 +254,7 @@ public class HeapPage implements Page {
      */
     public void deleteTuple(Tuple t) throws DbException {
     	//lab 2
-
+    	
     	int indexToDelete = t.getRecordId().tupleno();
     	if (indexToDelete > tuples.length){
     		throw new DbException("no tuple to delete");
@@ -263,8 +263,12 @@ public class HeapPage implements Page {
     		throw new DbException("no tuple to delete");
     	}
     	else {
-    		tuples[indexToDelete] = null;
-    		this.markSlotUsed(indexToDelete,false);
+    		if(t.equals(tuples[indexToDelete])){
+    			tuples[indexToDelete] = null;
+        		this.markSlotUsed(indexToDelete,false);
+    		}else{
+    			throw new DbException("no tuple to delete");
+    		}
     	}
  	
       }
@@ -282,17 +286,20 @@ public class HeapPage implements Page {
         // some code goes here
         // not necessary for lab1
     	int numSlotsFree = getNumEmptySlots();
-    	if(numSlotsFree > 0){
-    		int counter = 0; 
-    		for(Tuple tup : tuples){
-    			if(tup == null){
-    				tuples[counter] = t; 
-    				this.markSlotUsed(counter, true);
-    				
-    			}
-    			counter++;
-    		}
+    	if(t == null || tuples == null || this.td == null){
+    		throw new DbException("couldn't insert tuple");
     	}
+    	if ((!t.getTupleDesc().equals(this.td)) || numSlotsFree == 0 ){
+    		throw new DbException("couldn't insert tuple");
+    	}	
+		
+		for (int i = 0; i < tuples.length; i++){
+			if(tuples[i] == null){
+				tuples[i] = t; 
+				this.markSlotUsed(i, true);
+			}
+		}	
+		
     }
 
     /**
