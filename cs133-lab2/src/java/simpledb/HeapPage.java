@@ -284,20 +284,11 @@ public class HeapPage implements Page {
      * @param t The tuple to add.
      */
     public void insertTuple(Tuple t) throws DbException {
-        // some code goes here
-        // not necessary for lab1
     	int numSlotsFree = getNumEmptySlots();
-    	int tupleIndexToInsert = t.getRecordId().tupleno();
     	
-    	if (t == null || tuples == null || this.td == null){
+    	if (t == null || tuples == null || this.td == null || (!t.getTupleDesc().equals(this.td)) || numSlotsFree == 0){
     		throw new DbException("couldn't insert tuple");
     	}
-    	
-    	if ((!t.getTupleDesc().equals(this.td)) || numSlotsFree == 0 || tuples.length < tupleIndexToInsert  ){
-    		
-    		throw new DbException("couldn't insert tuple");
-    	}	
-
 		for (int i = 0; i < tuples.length; i++){
 
 			if(tuples[i] == null){	
@@ -306,11 +297,8 @@ public class HeapPage implements Page {
 				tuples[i] = t; 				
 				this.markSlotUsed(i, true);
 				break;
-				
 			}
-	
 		}
-
     }
 
     /**

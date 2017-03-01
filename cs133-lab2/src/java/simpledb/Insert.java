@@ -26,7 +26,10 @@ public class Insert extends Operator {
      *             if TupleDesc of child differs from table into which we are to
      *             insert.
      */
-    public Insert(TransactionId t,DbIterator child, int tableid){
+    public Insert(TransactionId t,DbIterator child, int tableid) throws DbException{
+    	if(!Database.getCatalog().getDatabaseFile(tableid).getTupleDesc().equals(child.getTupleDesc())){
+    		throw new DbException("child differs from table into which we are to insert");
+    	}
     	this.t = t;
     	this.child = child;
     	this.tableid = tableid;
@@ -34,15 +37,20 @@ public class Insert extends Operator {
     }
 
     public TupleDesc getTupleDesc() {
-        return this.child.getTupleDesc();
+    	Type[] typ = new Type[1];
+    	typ[0] = Type.INT_TYPE;
+    	TupleDesc td = new TupleDesc(typ);
+        return td;
     }
 
     public void open() throws DbException, TransactionAbortedException {
         child.open();
+        super.open();
     }
 
     public void close() {
         child.close();
+        super.close();
     }
 
     /**
@@ -50,7 +58,9 @@ public class Insert extends Operator {
      */
     public void rewind() throws DbException, TransactionAbortedException {
         child.close();
+        super.close();
         child.open();
+        super.open();
     }
 
     /**
@@ -72,6 +82,7 @@ public class Insert extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         if(firstTime){
+        	firstTime = false;
         	int numRecords = 0;
         	while(child.hasNext()){
         		Tuple next = child.next();
