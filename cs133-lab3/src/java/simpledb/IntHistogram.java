@@ -6,8 +6,7 @@ import java.util.HashMap;
 /** A class to represent a fixed-width histogram over a single integer-based field.
  */
 public class IntHistogram {
-	//private HashMap<Integer, Integer> buckets;
-	private ArrayList<Integer> buckets;
+	private int[] buckets;
 	private int bwidth;
 	private int min;
 	private int max;
@@ -32,20 +31,12 @@ public class IntHistogram {
      * @param max The maximum integer value that will ever be passed to this class for histogramming
      */
     public IntHistogram(int buckets, int min, int max) {
-    	this.buckets = new ArrayList<Integer>(buckets);
+    	this.buckets = new int[buckets];
     	this.ntups = 0;
     	this.min = min;
     	this.max = max;
     	//width of each bucket
     	this.bwidth = (int) Math.ceil(((double)(max - min))/buckets);
-    	System.out.println("min: " + min);
-    	System.out.println("max: " + max);
-    	System.out.println("buckets: " + buckets);
-    	System.out.println("width: " + this.bwidth);
-    	//set count of every bucket to 0
-    	for(int i=0; i<buckets; i++){
-    		this.buckets.add(0);
-    	}
     }
     //helper method to get index of bucket to put v into
     public int getBucket(int v){
@@ -67,15 +58,9 @@ public class IntHistogram {
      */
     public void addValue(int v) {
     	this.ntups++;
-    	System.out.println("v:" + v);
     	int bucketToAdd = getBucket(v);
-    	System.out.println("bucketToAdd: " + bucketToAdd);
-    	int currentCount = buckets.get(bucketToAdd);
-    	System.out.println("count: " + currentCount);
-    	buckets.set(bucketToAdd, currentCount + 1);
-    	System.out.println("ADDED");
+    	buckets[bucketToAdd] = buckets[bucketToAdd] + 1;
     }
-
     /**
      * Estimate the selectivity of a particular predicate and operand on this table.
      * 
@@ -89,12 +74,12 @@ public class IntHistogram {
     public double estimateSelectivity(Predicate.Op op, int v) {
     	if(op.equals(Predicate.Op.EQUALS)){
     		int bucket = getBucket(v);
-    		int height = buckets.get(bucket);
+    		int height = buckets[bucket];
     		return (double)(height/this.bwidth)/ this.ntups;
     	}
     	else if(op.equals(Predicate.Op.NOT_EQUALS)){
     		int bucket = getBucket(v);
-    		int height = buckets.get(bucket);
+    		int height = buckets[bucket];
     		return 1.0 - (height/this.bwidth)/ this.ntups;
     	}
     	else if(op.equals(Predicate.Op.GREATER_THAN)){
@@ -114,15 +99,13 @@ public class IntHistogram {
     			return 0.0;
     		}
     		int bucket = getBucket(v);
-    		System.out.print("LASDF: " + bucket);
-    		double h_b = (double) buckets.get(bucket);
+    		double h_b = (double) buckets[bucket];
     		double b_f = h_b / (double) this.ntups;
     		double b_right = (double)(bucket+1)*this.bwidth;
     		double b_part = (b_right - v) / (double) this.bwidth;
     		double selectivity = b_f * b_part;
-    		System.out.println(b_part + " " + selectivity);
-    		for(int temp = bucket+1; temp<this.buckets.size(); temp++){
-    			selectivity += (buckets.get(temp)/(double)this.ntups);
+    		for(int temp = bucket+1; temp<buckets.length; temp++){
+    			selectivity += (buckets[temp]/(double)this.ntups);
     		}
     		return selectivity;
     	}
@@ -134,28 +117,17 @@ public class IntHistogram {
     			return 0.0;
     		}
     		int bucket = getBucket(v);
-    		System.out.print("LASDF: " + bucket);
-    		double h_b = (double) buckets.get(bucket);
+    		double h_b = (double) buckets[bucket];
     		double b_f = h_b / (double) this.ntups;
     		double b_right = (double)(bucket+1)*this.bwidth;
     		double b_part = ((b_right - v) + 1.0) / (double) this.bwidth;
     		double selectivity = b_f * b_part;
-    		System.out.println(b_part + " " + selectivity);
-    		for(int temp = bucket+1; temp<this.buckets.size(); temp++){
-    			selectivity += (buckets.get(temp)/(double)this.ntups);
+    		for(int temp = bucket+1; temp<buckets.length; temp++){
+    			selectivity += (buckets[temp]/(double)this.ntups);
     		}
     		return selectivity;
     	}
     	else if(op.equals(Predicate.Op.LESS_THAN)){
-    		/*To estimate the selectivity of a range expression f>const, compute the 
-    		 * bucket b that const is in, with width w_b and height h_b. Then, b contains
-    		 *  a fraction b_f = h_b / ntups of the total tuples. Assuming tuples are uniformly
-    		 *   distributed throughout b, the fraction b_part of b that is > const is (b_right - const) / w_b,
-    		 *    where b_right is the right endpoint of b's bucket. Thus, bucket b contributes (b_f x b_part) 
-    		 *    selectivity to the predicate. In addition, buckets b+1...NumB-1 contribute all of their selectivity 
-    		 *    (which can be computed using a formula similar to b_f above). Summing the selectivity contributions 
-    		 *    of all the buckets will yield the overall selectivity of the expression. Figure 2 illustrates this process.
-    		 */
     		if(v<this.min){
     			return 0.0;
     		}
@@ -163,15 +135,13 @@ public class IntHistogram {
     			return 1.0;
     		}
     		int bucket = getBucket(v);
-    		System.out.println("BUCKET V: " + bucket);
-    		double h_b = (double) buckets.get(bucket);
+    		double h_b = (double) buckets[bucket];
     		double b_f = h_b / (double) this.ntups;
     		double b_left = (double)(bucket)*this.bwidth;
     		double b_part = (v - b_left) / (double) this.bwidth;
     		double selectivity = b_f * b_part;
-    		System.out.println(b_part + " " + selectivity);
     		for(int temp = bucket; temp>-1; temp--){
-    			selectivity += (buckets.get(temp)/(double)this.ntups);
+    			selectivity += (buckets[temp]/(double)this.ntups);
     		}
     		return selectivity;
     	}
@@ -183,15 +153,13 @@ public class IntHistogram {
     			return 1.0;
     		}
     		int bucket = getBucket(v);
-    		System.out.println("BUCKET V: " + bucket);
-    		double h_b = (double) buckets.get(bucket);
+    		double h_b = (double) buckets[bucket];
     		double b_f = h_b / (double) this.ntups;
     		double b_left = (double)(bucket)*this.bwidth;
     		double b_part = (v - b_left) + 1.0 / (double) this.bwidth;
     		double selectivity = b_f * b_part;
-    		System.out.println(b_part + " " + selectivity);
     		for(int temp = bucket; temp>-1; temp--){
-    			selectivity += (buckets.get(temp)/(double)this.ntups);
+    			selectivity += (buckets[temp]/(double)this.ntups);
     		}
     		return selectivity;
     	}
@@ -220,7 +188,6 @@ public class IntHistogram {
      * @return A string describing this histogram, for debugging purposes
      */
     public String toString() {
-        // some code goes here
-        return null;
+        return this.buckets.toString();
     }
 }
