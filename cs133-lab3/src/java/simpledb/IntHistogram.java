@@ -10,6 +10,7 @@ public class IntHistogram {
 	private ArrayList<Integer> buckets;
 	private int bwidth;
 	private int min;
+	private int max;
 	private int ntups;
     /**
      * Create a new IntHistogram.
@@ -34,6 +35,7 @@ public class IntHistogram {
     	this.buckets = new ArrayList<Integer>(buckets);
     	this.ntups = 0;
     	this.min = min;
+    	this.max = max;
     	//width of each bucket
     	this.bwidth = (int) Math.ceil(((double)(max - min))/buckets);
     	System.out.println("min: " + min);
@@ -48,7 +50,7 @@ public class IntHistogram {
     //helper method to get index of bucket to put v into
     public int getBucket(int v){
     	int bucketToAdd;
-    	if(v == this.min){
+    	if(v <= this.min){
     		bucketToAdd = 0;
     	}
     	else if((v- this.min) % this.bwidth == 0 && this.bwidth !=1){
@@ -90,6 +92,11 @@ public class IntHistogram {
     		int height = buckets.get(bucket);
     		return (double)(height/this.bwidth)/ this.ntups;
     	}
+    	else if(op.equals(Predicate.Op.NOT_EQUALS)){
+    		int bucket = getBucket(v);
+    		int height = buckets.get(bucket);
+    		return 1.0 - (height/this.bwidth)/ this.ntups;
+    	}
     	else if(op.equals(Predicate.Op.GREATER_THAN)){
     		/*To estimate the selectivity of a range expression f>const, compute the 
     		 * bucket b that const is in, with width w_b and height h_b. Then, b contains
@@ -100,15 +107,42 @@ public class IntHistogram {
     		 *    (which can be computed using a formula similar to b_f above). Summing the selectivity contributions 
     		 *    of all the buckets will yield the overall selectivity of the expression. Figure 2 illustrates this process.
     		 */
+    		if(v<this.min){
+    			return 1.0;
+    		}
+    		if(v>this.max){
+    			return 0.0;
+    		}
     		int bucket = getBucket(v);
     		System.out.print("LASDF: " + bucket);
-    		int h_b = buckets.get(bucket);
-    		int b_f = h_b / this.ntups;
-    		int b_right = bucket*this.bwidth;
-    		int b_part = (b_right - v) / this.bwidth;
+    		double h_b = (double) buckets.get(bucket);
+    		double b_f = h_b / (double) this.ntups;
+    		double b_right = (double)(bucket+1)*this.bwidth;
+    		double b_part = (b_right - v) / (double) this.bwidth;
     		double selectivity = b_f * b_part;
-    		for(int temp = bucket +1; temp<this.buckets.size(); temp++){
-    			selectivity += (buckets.get(temp)/this.ntups);
+    		System.out.println(b_part + " " + selectivity);
+    		for(int temp = bucket+1; temp<this.buckets.size(); temp++){
+    			selectivity += (buckets.get(temp)/(double)this.ntups);
+    		}
+    		return selectivity;
+    	}
+    	else if(op.equals(Predicate.Op.GREATER_THAN_OR_EQ)){
+    		if(v<this.min){
+    			return 1.0;
+    		}
+    		if(v>this.max){
+    			return 0.0;
+    		}
+    		int bucket = getBucket(v);
+    		System.out.print("LASDF: " + bucket);
+    		double h_b = (double) buckets.get(bucket);
+    		double b_f = h_b / (double) this.ntups;
+    		double b_right = (double)(bucket+1)*this.bwidth;
+    		double b_part = ((b_right - v) + 1.0) / (double) this.bwidth;
+    		double selectivity = b_f * b_part;
+    		System.out.println(b_part + " " + selectivity);
+    		for(int temp = bucket+1; temp<this.buckets.size(); temp++){
+    			selectivity += (buckets.get(temp)/(double)this.ntups);
     		}
     		return selectivity;
     	}
@@ -122,14 +156,42 @@ public class IntHistogram {
     		 *    (which can be computed using a formula similar to b_f above). Summing the selectivity contributions 
     		 *    of all the buckets will yield the overall selectivity of the expression. Figure 2 illustrates this process.
     		 */
+    		if(v<this.min){
+    			return 0.0;
+    		}
+    		if(v>this.max){
+    			return 1.0;
+    		}
     		int bucket = getBucket(v);
-    		int h_b = buckets.get(bucket);
-    		int b_f = h_b / this.ntups;
-    		int b_left = (bucket-1)*this.bwidth;
-    		int b_part = (b_left - v) / this.bwidth;
+    		System.out.println("BUCKET V: " + bucket);
+    		double h_b = (double) buckets.get(bucket);
+    		double b_f = h_b / (double) this.ntups;
+    		double b_left = (double)(bucket)*this.bwidth;
+    		double b_part = (v - b_left) / (double) this.bwidth;
     		double selectivity = b_f * b_part;
-    		for(int temp = bucket -1; temp>0; temp--){
-    			selectivity += (buckets.get(temp)/this.ntups);
+    		System.out.println(b_part + " " + selectivity);
+    		for(int temp = bucket; temp>-1; temp--){
+    			selectivity += (buckets.get(temp)/(double)this.ntups);
+    		}
+    		return selectivity;
+    	}
+    	else if(op.equals(Predicate.Op.LESS_THAN_OR_EQ)){
+    		if(v<this.min){
+    			return 0.0;
+    		}
+    		if(v>this.max){
+    			return 1.0;
+    		}
+    		int bucket = getBucket(v);
+    		System.out.println("BUCKET V: " + bucket);
+    		double h_b = (double) buckets.get(bucket);
+    		double b_f = h_b / (double) this.ntups;
+    		double b_left = (double)(bucket)*this.bwidth;
+    		double b_part = (v - b_left) + 1.0 / (double) this.bwidth;
+    		double selectivity = b_f * b_part;
+    		System.out.println(b_part + " " + selectivity);
+    		for(int temp = bucket; temp>-1; temp--){
+    			selectivity += (buckets.get(temp)/(double)this.ntups);
     		}
     		return selectivity;
     	}
