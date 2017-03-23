@@ -1,8 +1,11 @@
 package simpledb;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -12,7 +15,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * This class is not needed in implementing lab1 and lab2.
  */
 public class TableStats {
-
+	private HashMap<Integer, Integer> min;
+	private HashMap<Integer, Integer> max;
+	private ArrayList<Integer> stringCols;
+	private HashMap<Integer, IntHistogram> intHists;
+	private HashMap<Integer, StringHistogram> stringHists;
     private static final ConcurrentHashMap<String, TableStats> statsMap = new ConcurrentHashMap<String, TableStats>();
 
     static final int IOCOSTPERPAGE = 1000;
@@ -53,8 +60,14 @@ public class TableStats {
         System.out.println("Computing table stats.");
         while (tableIt.hasNext()) {
             int tableid = tableIt.next();
-            TableStats s = new TableStats(tableid, IOCOSTPERPAGE);
-            setTableStats(Database.getCatalog().getTableName(tableid), s);
+            TableStats s;
+			try {
+				s = new TableStats(tableid, IOCOSTPERPAGE);
+				setTableStats(Database.getCatalog().getTableName(tableid), s);
+			} catch (NoSuchElementException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
         System.out.println("Done.");
     }
@@ -75,8 +88,10 @@ public class TableStats {
      * @param ioCostPerPage
      *            The cost per page of IO. This doesn't differentiate between
      *            sequential-scan IO and disk seeks.
+     * @throws TransactionAbortedException 
+     * @throws NoSuchElementException 
      */
-    public TableStats(int tableid, int ioCostPerPage) {
+    public TableStats(int tableid, int ioCostPerPage){
         // For this function, you'll have to get the
         // DbFile for the table in question,
         // then scan through its tuples and calculate
@@ -87,6 +102,124 @@ public class TableStats {
 	// See project description for hint on using a Transaction
 	
         // some code goes here
+    	this.min = new HashMap<Integer, Integer>();
+    	this.max = new HashMap<Integer, Integer>();
+    	this.stringCols = new ArrayList<Integer>();
+    	this.intHists = new HashMap<Integer, IntHistogram>();
+    	this.stringHists = new HashMap<Integer, StringHistogram>();
+    	Transaction t = new Transaction(); 
+    	t.start(); 
+    	SeqScan s = new SeqScan(t.getId(), tableid, "t"); 
+    	// do stuff with s 
+    	try {
+    		s.open();
+			while(s.hasNext()){
+				//get Tuple
+				Tuple tup = s.next();
+				Iterator<Field> i = tup.fields();
+				//column number
+				int col = 0;
+				while(i.hasNext()){
+					//get field in tuple
+					Field fd = i.next();
+					//if field is intfield
+					if(fd.getType() == Type.INT_TYPE){
+						IntField ifd = (IntField) fd;
+						int fval = ifd.getValue();
+						Integer curMin = min.get(col);
+						Integer curMax = max.get(col);
+						if(curMin == null || curMin > fval){
+							min.put(col, fval);
+						}
+						if(curMax == null || curMax < fval){
+							max.put(col, fval);
+						}
+					}
+					//if field is stringfield
+					else{
+						stringCols.add(col);
+					}
+					col++;
+				}
+			}
+	    	//create inthistograms
+	    	for(Integer col: min.keySet()){
+	    		intHists.put(col, new IntHistogram(NUM_HIST_BINS,min.get(col), max.get(col)));
+	    	}
+	    	//create stringhistograms
+	    	for(Integer col: stringCols){
+	    		stringHists.put(col, new StringHistogram(NUM_HIST_BINS));
+	    	}
+	  	
+	    	s.rewind();
+	    	
+		 catch (DbException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (NoSuchElementException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	try {
+			
+		} catch (DbException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (NoSuchElementException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	try {
+			while(s.hasNext()){
+				//get Tuple
+				Tuple tup = s.next();
+				Iterator<Field> i = tup.fields();
+				//column number
+				int col = 0;
+				while(i.hasNext()){
+					//get field in tuple
+					Field fd = i.next();
+					//if field is intfield
+					if(fd.getType() == Type.INT_TYPE){
+						IntField ifd = (IntField) fd;
+						int fval = ifd.getValue();
+						IntHistogram iHist = this.intHists.get(col);
+						iHist.addValue(fval);
+						this.intHists.put(col, iHist);
+					}
+					//if field is stringfield
+					else{
+						StringField sfd = (StringField) fd;
+						String fval = sfd.getValue();
+						StringHistogram sHist = this.stringHists.get(col);
+						sHist.addValue(fval);
+						this.stringHists.put(col, sHist);
+					}
+					col++;
+				}
+			}
+		} catch (DbException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (NoSuchElementException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	try {
+			t.commit();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     /**
@@ -150,8 +283,16 @@ public class TableStats {
      *         predicate
      */
     public double estimateSelectivity(int field, Predicate.Op op, Field constant) {
-        // some code goes here
-        return 1.0;
+    	if(constant.getType() == Type.INT_TYPE){
+    		IntHistogram iHist = this.intHists.get(field);
+    		IntField ifd = (IntField) constant;
+    		return iHist.estimateSelectivity(op, ifd.getValue());
+    	}
+    	else{
+    		StringHistogram sHist = this.stringHists.get(field);
+    		StringField sfd = (StringField) constant;
+    		return sHist.estimateSelectivity(op, sfd.getValue());
+    	}
     }
 
     /**

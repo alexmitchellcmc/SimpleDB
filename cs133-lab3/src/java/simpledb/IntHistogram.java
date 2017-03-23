@@ -167,7 +167,6 @@ public class IntHistogram {
     		return -1.0;
     	}
     }
-    
     /**
      * @return
      *     the average selectivity of this histogram.
