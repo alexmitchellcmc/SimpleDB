@@ -1,5 +1,4 @@
 package simpledb;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,7 +6,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * TableStats represents statistics (e.g., histograms) about base tables in a
  * query. 
@@ -15,23 +13,29 @@ import java.util.concurrent.ConcurrentHashMap;
  * This class is not needed in implementing lab1 and lab2.
  */
 public class TableStats {
+	//key:col value:min of col
 	private HashMap<Integer, Integer> min;
+	//key:col value:max of col
 	private HashMap<Integer, Integer> max;
+	//stores cols that hold strings
 	private ArrayList<Integer> stringCols;
+	//key: col value: IntHistogram for all ints in col
 	private HashMap<Integer, IntHistogram> intHists;
+	//key: col value: StringHistogram for all strings in col
 	private HashMap<Integer, StringHistogram> stringHists;
+	//total tuples scanned
+	private int ntups;
+	private int tableId;
+	//io cost per page scanned
+	private int ioCost;
     private static final ConcurrentHashMap<String, TableStats> statsMap = new ConcurrentHashMap<String, TableStats>();
-
     static final int IOCOSTPERPAGE = 1000;
-
     public static TableStats getTableStats(String tablename) {
         return statsMap.get(tablename);
     }
-
     public static void setTableStats(String tablename, TableStats stats) {
         statsMap.put(tablename, stats);
     }
-    
     public static void setStatsMap(HashMap<String,TableStats> s)
     {
         try {
@@ -47,16 +51,12 @@ public class TableStats {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-
     }
-
     public static Map<String, TableStats> getStatsMap() {
         return statsMap;
     }
-
     public static void computeStatistics() {
         Iterator<Integer> tableIt = Database.getCatalog().tableIdIterator();
-
         System.out.println("Computing table stats.");
         while (tableIt.hasNext()) {
             int tableid = tableIt.next();
@@ -65,20 +65,17 @@ public class TableStats {
 				s = new TableStats(tableid, IOCOSTPERPAGE);
 				setTableStats(Database.getCatalog().getTableName(tableid), s);
 			} catch (NoSuchElementException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
         }
         System.out.println("Done.");
     }
-
     /**
      * Number of bins for the histogram. Feel free to increase this value over
      * 100, though our tests assume that you have at least 100 bins in your
      * histograms.
      */
     static final int NUM_HIST_BINS = 100;
-
     /**
      * Create a new TableStats object, that keeps track of statistics on each
      * column of a table
@@ -100,29 +97,31 @@ public class TableStats {
         // necessarily have to (for example) do everything
         // in a single scan of the table.
 	// See project description for hint on using a Transaction
-	
-        // some code goes here
     	this.min = new HashMap<Integer, Integer>();
     	this.max = new HashMap<Integer, Integer>();
     	this.stringCols = new ArrayList<Integer>();
     	this.intHists = new HashMap<Integer, IntHistogram>();
     	this.stringHists = new HashMap<Integer, StringHistogram>();
+    	this.tableId = tableid;
+    	this.ioCost = ioCostPerPage;
     	Transaction t = new Transaction(); 
     	t.start(); 
     	SeqScan s = new SeqScan(t.getId(), tableid, "t"); 
-    	// do stuff with s 
     	try {
     		s.open();
+    		//find min and max of each int col and string cols
 			while(s.hasNext()){
 				//get Tuple
 				Tuple tup = s.next();
+				//count number of tuples
+				this.ntups++;
 				Iterator<Field> i = tup.fields();
 				//column number
 				int col = 0;
 				while(i.hasNext()){
 					//get field in tuple
 					Field fd = i.next();
-					//if field is intfield
+					//if field is intfield find max and min for each col
 					if(fd.getType() == Type.INT_TYPE){
 						IntField ifd = (IntField) fd;
 						int fval = ifd.getValue();
@@ -135,7 +134,7 @@ public class TableStats {
 							max.put(col, fval);
 						}
 					}
-					//if field is stringfield
+					//if field is stringfield add col to stringCols
 					else{
 						stringCols.add(col);
 					}
@@ -150,33 +149,9 @@ public class TableStats {
 	    	for(Integer col: stringCols){
 	    		stringHists.put(col, new StringHistogram(NUM_HIST_BINS));
 	    	}
-	  	
+	    	//add values
 	    	s.rewind();
-	    	
-		 catch (DbException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (NoSuchElementException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TransactionAbortedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	try {
-			
-		} catch (DbException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (NoSuchElementException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TransactionAbortedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	try {
-			while(s.hasNext()){
+	    	while(s.hasNext()){
 				//get Tuple
 				Tuple tup = s.next();
 				Iterator<Field> i = tup.fields();
@@ -204,24 +179,14 @@ public class TableStats {
 					col++;
 				}
 			}
-		} catch (DbException e1) {
-			// TODO Auto-generated catch block
+    	} catch (DbException e1) {
 			e1.printStackTrace();
 		} catch (NoSuchElementException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (TransactionAbortedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	try {
-			t.commit();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
-
     /**
      * Estimates the cost of sequentially scanning the file, given that the cost
      * to read a page is costPerPageIO. You can assume that there are no seeks
@@ -235,10 +200,9 @@ public class TableStats {
      * @return The estimated cost of scanning the table.
      */
     public double estimateScanCost() {
-        // some code goes here
-        return 0;
+        HeapFile hf = (HeapFile) Database.getCatalog().getDatabaseFile(this.tableId);
+        return hf.numPages() * ioCost;
     }
-
     /**
      * This method returns the number of tuples in the relation, given that a
      * predicate with selectivity selectivityFactor is applied.
@@ -249,10 +213,8 @@ public class TableStats {
      *         selectivityFactor
      */
     public int estimateTableCardinality(double selectivityFactor) {
-        // some code goes here
-        return 0;
+        return (int) (this.ntups * selectivityFactor);
     }
-
     /**
      * The average selectivity of the field under op.
      * @param field
@@ -268,7 +230,6 @@ public class TableStats {
     public double avgSelectivity(int field, Predicate.Op op) {
         return 0.5;
     }
-
     /**
      * Estimate the selectivity of predicate <tt>field op constant</tt> on the
      * table.
@@ -294,13 +255,10 @@ public class TableStats {
     		return sHist.estimateSelectivity(op, sfd.getValue());
     	}
     }
-
     /**
      * return the total number of tuples in this table
      * */
     public int totalTuples() {
-        // some code goes here
-        return 0;
+        return this.ntups;
     }
-
 }

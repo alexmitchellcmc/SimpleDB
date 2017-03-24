@@ -1,8 +1,6 @@
 package simpledb;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-
 /** A class to represent a fixed-width histogram over a single integer-based field.
  */
 public class IntHistogram {
@@ -73,14 +71,20 @@ public class IntHistogram {
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
     	if(op.equals(Predicate.Op.EQUALS)){
+    		if(v<this.min || v >this.max){
+    			return 0.0;
+    		}
     		int bucket = getBucket(v);
     		int height = buckets[bucket];
     		return (double)(height/this.bwidth)/ this.ntups;
     	}
     	else if(op.equals(Predicate.Op.NOT_EQUALS)){
+    		if(v<this.min || v >this.max){
+    			return 1.0;
+    		}
     		int bucket = getBucket(v);
     		int height = buckets[bucket];
-    		return 1.0 - (height/this.bwidth)/ this.ntups;
+    		return 1.0 - ((double)(height/this.bwidth)/ this.ntups);
     	}
     	else if(op.equals(Predicate.Op.GREATER_THAN)){
     		/*To estimate the selectivity of a range expression f>const, compute the 
@@ -110,7 +114,7 @@ public class IntHistogram {
     		return selectivity;
     	}
     	else if(op.equals(Predicate.Op.GREATER_THAN_OR_EQ)){
-    		if(v<this.min){
+    		if(v<=this.min){
     			return 1.0;
     		}
     		if(v>this.max){
@@ -128,7 +132,7 @@ public class IntHistogram {
     		return selectivity;
     	}
     	else if(op.equals(Predicate.Op.LESS_THAN)){
-    		if(v<this.min){
+    		if(v<=this.min){
     			return 0.0;
     		}
     		if(v>this.max){
@@ -146,7 +150,7 @@ public class IntHistogram {
     		return selectivity;
     	}
     	else if(op.equals(Predicate.Op.LESS_THAN_OR_EQ)){
-    		if(v<this.min){
+    		if(v<=this.min){
     			return 0.0;
     		}
     		if(v>this.max){
@@ -177,11 +181,9 @@ public class IntHistogram {
      *
      * Not necessary for lab 3
      * */
-    public double avgSelectivity()
-    {
+    public double avgSelectivity(){
         return 0.5;
     }
-    
     /**
      * (Optional) A String representation of the contents of this histogram
      * @return A string describing this histogram, for debugging purposes

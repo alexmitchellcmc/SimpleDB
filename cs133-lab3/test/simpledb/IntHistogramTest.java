@@ -81,7 +81,6 @@ public class IntHistogramTest {
 	 * Make sure that GREATER_THAN binning does something reasonable.
 	 */
 	@Test public void opGreaterThanTest() {
-		System.out.println("GREATERTHANTEST");
 		IntHistogram h = new IntHistogram(10, 1, 10);
 		
 		// Set some values
@@ -112,7 +111,6 @@ public class IntHistogramTest {
 		h.addValue(10);
 		
 		// Be conservative in case of alternate implementations
-		System.out.println("GETTING: " + h.estimateSelectivity(Op.LESS_THAN, 2));
 		Assert.assertTrue(h.estimateSelectivity(Op.LESS_THAN, -1) < 0.001);
 		Assert.assertTrue(h.estimateSelectivity(Op.LESS_THAN, 2) < 0.4);
 		Assert.assertTrue(h.estimateSelectivity(Op.LESS_THAN, 4) > 0.6);
