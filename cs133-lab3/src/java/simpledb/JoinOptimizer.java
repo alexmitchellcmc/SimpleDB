@@ -1,10 +1,7 @@
 package simpledb;
-
 import java.util.*;
-
 import javax.swing.*;
 import javax.swing.tree.*;
-
 /**
  * The JoinOptimizer class is responsible for ordering a series of joins
  * optimally, and for selecting the best instantiation of a join for a given
@@ -13,7 +10,6 @@ import javax.swing.tree.*;
 public class JoinOptimizer {
     LogicalPlan p;
     Vector<LogicalJoinNode> joins;
-
     /**
      * Constructor
      * 
@@ -26,7 +22,6 @@ public class JoinOptimizer {
         this.p = p;
         this.joins = joins;
     }
-
     /**
      * Return best iterator for computing a given logical join, given the
      * specified statistics, and the provided left and right subplans. Note that
@@ -43,16 +38,13 @@ public class JoinOptimizer {
      */
     public static DbIterator instantiateJoin(LogicalJoinNode lj,
             DbIterator plan1, DbIterator plan2) throws ParsingException {
-
         int t1id = 0, t2id = 0;
         DbIterator j;
-
         try {
             t1id = plan1.getTupleDesc().fieldNameToIndex(lj.f1QuantifiedName);
         } catch (NoSuchElementException e) {
             throw new ParsingException("Unknown field " + lj.f1QuantifiedName);
         }
-
         if (lj instanceof LogicalSubplanJoinNode) {
             t2id = 0;
         } else {
@@ -64,15 +56,10 @@ public class JoinOptimizer {
                         + lj.f2QuantifiedName);
             }
         }
-
         JoinPredicate p = new JoinPredicate(t1id, lj.p, t2id);
-
         j = new Join(p,plan1,plan2);
-
         return j;
-
     }
-
     /**
      * Estimate the cost of a join.
      * 
@@ -115,7 +102,6 @@ public class JoinOptimizer {
             // nested-loops join.
         }
     }
-
     /**
      * Estimate the cardinality of a join. The cardinality of a join is the
      * number of tuples produced by the join.
@@ -147,7 +133,6 @@ public class JoinOptimizer {
                     stats, p.getTableAliasToIdMapping());
         }
     }
-
     /**
      * Estimate the join cardinality of two tables.
      * For simple estimations, you will likely not use many of
@@ -188,7 +173,6 @@ public class JoinOptimizer {
 			return (int) (card1 * card2 * (3.0/10.0));
 		}
     }
-
     /**
      * Helper method to enumerate all of the subsets of a given size of a
      * specified vector.
@@ -203,8 +187,6 @@ public class JoinOptimizer {
     public <T> Set<Set<T>> enumerateSubsets(Vector<T> v, int size) {
         Set<Set<T>> els = new HashSet<Set<T>>();
         els.add(new HashSet<T>());
-
-
         for (int i = 0; i < size; i++) {
             Set<Set<T>> newels = new HashSet<Set<T>>();
             for (Set<T> s : els) {
@@ -216,11 +198,8 @@ public class JoinOptimizer {
             }
             els = newels;
         }
-
         return els;
-
     }
-
     /**
      * Compute a logical, reasonably efficient join on the specified tables.
      * 
@@ -240,16 +219,33 @@ public class JoinOptimizer {
      *             when stats or filter selectivities is missing a table in the
      *             join, or or when another internal error occurs
      */
-    public Vector<LogicalJoinNode> orderJoins(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	public Vector<LogicalJoinNode> orderJoins(
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
-        //Not necessary for labs 1-2
-
-        // some code goes here
-
-	//Replace the following with the appropriate return
-        return joins;
+    	Vector j = this.joins;
+    	for (int i=1; i<= j.size(); i++){  // First find best plan for single join, then for two joins, etc. 
+			Set<Set<LogicalJoinNode>> sets = (Set<Set<LogicalJoinNode>>) enumerateSubsets(j, i);
+    		for (Set<LogicalJoinNode> s : sets){ // Looking at a concrete subset of joins
+    			Object[] removeN = s.toArray();
+    			PlanCache bestplan = new PlanCache(); // We want to find the best plan for this concrete subset 
+    			for(Set s2 : sets2){ 
+    				Object[] removeN = s.toArray();
+    				while
+    				CostCard ccard =  computeCostAndCardOfSubplan(stats, filterSelectivities, ,joinSet,
+                            double bestCostSoFar,
+                            PlanCache pc) 
+    				subplan = optjoin(s')   // Look-up in the cache the best query plan for s but with one relation missing
+    				plan = best way to join (s-s') to subplan  // Now find the best plan to extend s' by one join to get s
+    				if (cost(plan) < cost(bestPlan))
+    			9.               bestPlan = plan // Update the best plan for computing s
+    			10.      optjoin(s) = bestPlan
+    			11. return optjoin(j)
+    			}
+    		}
+    	}
+        return j;
     }
 
     // ===================== Private Methods =================================
