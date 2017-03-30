@@ -1,5 +1,6 @@
 package simpledb;
 import java.util.*;
+
 import javax.swing.*;
 import javax.swing.tree.*;
 /**
@@ -224,28 +225,38 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
+    	
     	Vector j = this.joins;
+    	double bestCost = Double.MAX_VALUE;
+    	CostCard ccard;
+    	PlanCache bestplan = new PlanCache();
+    	
     	for (int i=1; i<= j.size(); i++){  // First find best plan for single join, then for two joins, etc. 
 			Set<Set<LogicalJoinNode>> sets = (Set<Set<LogicalJoinNode>>) enumerateSubsets(j, i);
-    		for (Set<LogicalJoinNode> s : sets){ // Looking at a concrete subset of joins
-    			Object[] removeN = s.toArray();
-    			PlanCache bestplan = new PlanCache(); // We want to find the best plan for this concrete subset 
-    			for(Set s2 : sets2){ 
-    				Object[] removeN = s.toArray();
-    				while
-    				CostCard ccard =  computeCostAndCardOfSubplan(stats, filterSelectivities, ,joinSet,
-                            double bestCostSoFar,
-                            PlanCache pc) 
-    				subplan = optjoin(s')   // Look-up in the cache the best query plan for s but with one relation missing
-    				plan = best way to join (s-s') to subplan  // Now find the best plan to extend s' by one join to get s
-    				if (cost(plan) < cost(bestPlan))
-    			9.               bestPlan = plan // Update the best plan for computing s
-    			10.      optjoin(s) = bestPlan
-    			11. return optjoin(j)
+			
+    		for (Set<LogicalJoinNode> se : sets){ 
+    			// Looking at a concrete subset of joins
+    			 // We want to find the best plan for this concrete subset 
+    			for(LogicalJoinNode lnode : se){
+	    			
+    				ccard =  computeCostAndCardOfSubplan(stats, filterSelectivities, lnode, se, bestCost,bestplan); 
+	    			if (ccard == null){
+	    				break;
+	    			}
+	    			else{
+	    				double curCost = ccard.cost;
+	    				if (curCost < bestCost){
+	    					bestCost = curCost;
+	    				}
+	    			}
+	    		bestplan.addPlan(se,bestCost,ccard.card,ccard.plan);
+
     			}
     		}
-    	}
-        return j;
+    	}	
+    	Set<Set<LogicalJoinNode>> sets = (Set<Set<LogicalJoinNode>>) enumerateSubsets(j, joins.size());
+    	Iterator it = sets.iterator();
+    	return bestplan.getOrder((Set<LogicalJoinNode>) it.next());
     }
 
     // ===================== Private Methods =================================
