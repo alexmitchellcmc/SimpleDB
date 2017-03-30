@@ -227,36 +227,46 @@ public class JoinOptimizer {
             throws ParsingException {
     	
     	Vector j = this.joins;
-    	double bestCost = Double.MAX_VALUE;
-    	CostCard ccard;
+    	
+    	CostCard ccard = new CostCard();
     	PlanCache bestplan = new PlanCache();
     	
     	for (int i=1; i<= j.size(); i++){  // First find best plan for single join, then for two joins, etc. 
-			Set<Set<LogicalJoinNode>> sets = (Set<Set<LogicalJoinNode>>) enumerateSubsets(j, i);
-			
+    			
+    		Set<Set<LogicalJoinNode>> sets = (Set<Set<LogicalJoinNode>>) enumerateSubsets(j, i);
+    		
     		for (Set<LogicalJoinNode> se : sets){ 
-    			// Looking at a concrete subset of joins
-    			 // We want to find the best plan for this concrete subset 
+    			
+    			double bestCost = Double.MAX_VALUE;
+    			int card = Integer.MAX_VALUE;
+    			Vector<LogicalJoinNode> v = null;
+    			
     			for(LogicalJoinNode lnode : se){
 	    			
     				ccard =  computeCostAndCardOfSubplan(stats, filterSelectivities, lnode, se, bestCost,bestplan); 
 	    			if (ccard == null){
-	    				break;
+	    				continue;
 	    			}
 	    			else{
 	    				double curCost = ccard.cost;
 	    				if (curCost < bestCost){
 	    					bestCost = curCost;
+	    					card = ccard.card;
+	    					v = ccard.plan;
 	    				}
 	    			}
-	    		bestplan.addPlan(se,bestCost,ccard.card,ccard.plan);
-
+	    			
     			}
-    		}
+    			bestplan.addPlan(se,bestCost,card,v);	
+    		}	
     	}	
+    	if (explain){
+    		printJoins(j, bestplan, stats, filterSelectivities);
+    	}
     	Set<Set<LogicalJoinNode>> sets = (Set<Set<LogicalJoinNode>>) enumerateSubsets(j, joins.size());
     	Iterator it = sets.iterator();
     	return bestplan.getOrder((Set<LogicalJoinNode>) it.next());
+    	
     }
 
     // ===================== Private Methods =================================
