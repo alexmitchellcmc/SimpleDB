@@ -2,9 +2,7 @@ package simpledb;
 
 import java.io.*;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -309,15 +307,27 @@ public class BufferPool {
     private class LockManager {
 	
 	final int LOCK_WAIT = 10;       // milliseconds
+	HashMap<TransactionId, LinkedList<PageId>> locked;
+	HashMap<PageId, Queue<TransactionId>> pageLocks;
+	HashMap<PageId, Permissions> pagePerms;
 	
 	
 	/**
 	 * Sets up the lock manager to keep track of page-level locks for transactions
 	 * Should initialize state required for the lock table data structure(s)
+	 * 
+	 * LockManager constructor: Your constructor should create whatever data structure(s) you will be using to represent your lock table. The design of this is entirely up to you. 
+	 * You may decide to use multiple data structures, create a helper class, etc. 
+	 * As a design guideline, you should ensure your data structure(s) allow you to answer these questions:
+	   		-Given a transactionId, which pages does it have locked?
+	   		-Given a page Id, which transactions hold a lock on the page?
+	   		Given a page, which Permissions is it locked with?
+	   If you create a helper class for which you will eventually want to check equality of instances, be sure to implement its equals() method.
 	 */
 	private LockManager() {
-	    // some code here
-	    
+	    locked = new HashMap<TransactionId, LinkedList<PageId>>();
+	    pageLocks = new HashMap<PageId, Queue<TransactionId>>();
+	    pagePerms = new HashMap<PageId, Permissions> ();
 	}
 	
 	
@@ -398,9 +408,52 @@ public class BufferPool {
 	 *   if another tid is holding any sort of lock on pid, then the tid cannot currenty acquire the lock (return true).
 	 */
 	private synchronized boolean locked(TransactionId tid, PageId pid, Permissions perm) {
-	    // some code here
+		if (perm == Permissions.READ_ONLY){
+			//if tid is holding any sort of lock on pid, then the tid can acquire the lock (return false)
+			if(locked.containsKey(tid)){
+				LinkedList<PageId> lockedPages = locked.get(tid);
+				for(PageId page : lockedPages){
+					if(page.equals(pid)){
+						return false;
+					}
+				}
+			}
+			//if another tid is holding a READ lock on pid, then the tid can acquire the lock (return false).
+			if(pageLocks.containsKey(pid)){
+				Queue<TransactionId> tids = pageLocks.get(pid);
+				TransactionId curLock = tids.peek();
+				if(pagePerms.containsKey(pid)){
+					Permissions p = pagePerms.get(pid);
+					if((!curLock.equals(tid)) && p.equals(Permissions.READ_ONLY)){
+						return false;
+					}
+					//if another tid is holding a WRITE lock on pid, then tid can not currently 
+					//acquire the lock (return true).
+					else if((!curLock.equals(tid)) && p.equals(Permissions.READ_WRITE)){
+						return true;
+					}
+				}
+			}
+		}
+		else{
+				 //if tid is THE ONLY ONE holding a READ lock on pid, then tid can acquire the lock (return false).
+			if(pageLocks.containsKey(pid)){
+				Queue<TransactionId> tids = pageLocks.get(pid);
+				if(pagePerms.containsKey(pid)){
+					Permissions p = pagePerms.get(pid);
+					if(tids.size()==1 && p.equals(Permissions.READ_ONLY)){
+						return false;
+					}
+					else{
+						return true;
+					}
+				}
+			}
+				 //if tid is holding a WRITE lock on pid, then the tid already has the lock (return false).
+				 //if another tid is holding any sort of lock on pid, then the tid cannot currenty acquire the lock (return true).
 	    
 	    return true;
+		}
 	}
 	
 	/**
@@ -425,14 +478,37 @@ public class BufferPool {
 	 */
 	private synchronized boolean lock(TransactionId tid, PageId pid, Permissions perm) {
 	    
-	    if(locked(tid, pid, perm)) 
-		return false; // this transaction cannot get the lock on this page; it is "locked out"
-
+	    if(locked(tid, pid, perm)){
+	    	return false; // this transaction cannot get the lock on this page; it is "locked out"
+	    }
 	    // Else, this transaction is able to get the lock, update lock table
-	    // some code here
-
-	    
-	    return true;
+	    else{
+	    	//locked
+	    	if(locked.containsKey(tid)){
+	    		LinkedList<PageId> pages = locked.get(tid);
+	    		pages.add(pid);
+	    		locked.put(tid, pages);
+	    	}
+	    	else{
+	    		LinkedList<PageId> pages = new LinkedList<PageId>();
+	    		pages.add(pid);
+	    		locked.put(tid, pages);
+	    	}
+	    	//pageLocks
+	       	if(pageLocks.containsKey(pid)){
+	    		Queue<TransactionId> tids = pageLocks.get(pid);
+	    		tids.add(tid);
+	    		pageLocks.put(pid, tids);
+	    	}
+	    	else{
+	    		Queue<TransactionId> tids = new LinkedList<TransactionId>();
+	    		tids.add(tid);
+	    		pageLocks.put(pid, tids);
+	    	}
+	       	//pagePerms
+	       	pagePerms.put(pid, perm);
+	    	return true;
+	    }
 	}
     }	
     
