@@ -308,7 +308,7 @@ public class BufferPool {
 	
 	final int LOCK_WAIT = 10;       // milliseconds
 	HashMap<TransactionId, LinkedList<PageId>> locked;
-	HashMap<PageId, Queue<TransactionId>> pageLocks;
+	HashMap<PageId, ArrayList<TransactionId>> pageLocks;
 	HashMap<PageId, Permissions> pagePerms;
 	
 	
@@ -326,7 +326,7 @@ public class BufferPool {
 	 */
 	private LockManager() {
 	    locked = new HashMap<TransactionId, LinkedList<PageId>>();
-	    pageLocks = new HashMap<PageId, Queue<TransactionId>>();
+	    pageLocks = new HashMap<PageId, ArrayList<TransactionId>>();
 	    pagePerms = new HashMap<PageId, Permissions> ();
 	}
 	
@@ -381,11 +381,20 @@ public class BufferPool {
 	
 	
 	
-	/** Return true if the specified transaction has a lock on the specified page */
+	/** Return true if the specified transaction has a lock on the specified page
+	 * Simple method used by Buffer Pool to determine whether the given transaction 
+	 * has any type of lock on the given page.
+	 **/
 	public synchronized boolean holdsLock(TransactionId tid, PageId p) {
-	    // some code here
-	    
-	    return false;
+	   if(locked.containsKey(tid)){
+		   LinkedList<PageId> pages = locked.get(tid);
+		   for(PageId pid : pages){
+			   if(p.equals(pid)){
+				   return true;
+			   }
+		   }
+	   }
+		return false;
 	}
 	
 	/**
@@ -420,8 +429,8 @@ public class BufferPool {
 			}
 			//if another tid is holding a READ lock on pid, then the tid can acquire the lock (return false).
 			if(pageLocks.containsKey(pid)){
-				Queue<TransactionId> tids = pageLocks.get(pid);
-				TransactionId curLock = tids.peek();
+				ArrayList<TransactionId> tids = pageLocks.get(pid);
+				TransactionId curLock = tids.get(0);
 				if(pagePerms.containsKey(pid)){
 					Permissions p = pagePerms.get(pid);
 					if((!curLock.equals(tid)) && p.equals(Permissions.READ_ONLY)){
@@ -436,24 +445,42 @@ public class BufferPool {
 			}
 		}
 		else{
-				 //if tid is THE ONLY ONE holding a READ lock on pid, then tid can acquire the lock (return false).
+			//if tid is THE ONLY ONE holding a READ lock on pid, then tid can acquire the lock (return false).
 			if(pageLocks.containsKey(pid)){
-				Queue<TransactionId> tids = pageLocks.get(pid);
+				ArrayList<TransactionId> tids = pageLocks.get(pid);
 				if(pagePerms.containsKey(pid)){
 					Permissions p = pagePerms.get(pid);
 					if(tids.size()==1 && p.equals(Permissions.READ_ONLY)){
 						return false;
 					}
-					else{
-						return true;
-					}
 				}
 			}
 				 //if tid is holding a WRITE lock on pid, then the tid already has the lock (return false).
-				 //if another tid is holding any sort of lock on pid, then the tid cannot currenty acquire the lock (return true).
-	    
-	    return true;
+			if(pageLocks.containsKey(pid)){
+				ArrayList<TransactionId> tids = pageLocks.get(pid);
+				if(pagePerms.containsKey(pid)){
+					Permissions p = pagePerms.get(pid);
+					for(TransactionId t : tids){
+						if(t.equals(tid) && p.equals(Permissions.READ_WRITE)){
+							return false;
+						}
+					}
+				}
+			}
+			//if another tid is holding any sort of lock on pid, then the tid cannot currenty acquire the lock (return true).
+			if(pageLocks.containsKey(pid)){
+				ArrayList<TransactionId> tids = pageLocks.get(pid);
+				if(pagePerms.containsKey(pid)){
+					Permissions p = pagePerms.get(pid);
+					for(TransactionId t : tids){
+						if((!t.equals(tid)) && (p.equals(Permissions.READ_WRITE) || p.equals(Permissions.READ_ONLY))){
+							return true;
+						}
+					}
+				}
+			}
 		}
+		return false;
 	}
 	
 	/**
@@ -465,7 +492,16 @@ public class BufferPool {
 	 * However, if you decide to change the fact that a thread is sleeping in acquireLock(), you would have to wake it up here
 	 */
 	public synchronized void releaseLock(TransactionId tid, PageId pid) {
-	    // some code here
+	    if(locked.containsKey(tid)){
+	    	LinkedList<PageId> pages = locked.get(tid);
+	    	pages.remove(pid);
+	    	locked.put(tid, pages);
+	    }
+	    if(pageLocks.containsKey(pid)){
+	    	ArrayList<TransactionId> tids = pageLocks.get(pid);
+	    	tids.remove(tid);
+	    	pageLocks.put(pid, tids);
+	    }
 	    
 	}
 	
@@ -496,12 +532,12 @@ public class BufferPool {
 	    	}
 	    	//pageLocks
 	       	if(pageLocks.containsKey(pid)){
-	    		Queue<TransactionId> tids = pageLocks.get(pid);
+	    		ArrayList<TransactionId> tids = pageLocks.get(pid);
 	    		tids.add(tid);
 	    		pageLocks.put(pid, tids);
 	    	}
 	    	else{
-	    		Queue<TransactionId> tids = new LinkedList<TransactionId>();
+	    		ArrayList<TransactionId> tids = new ArrayList<TransactionId>();
 	    		tids.add(tid);
 	    		pageLocks.put(pid, tids);
 	    	}
