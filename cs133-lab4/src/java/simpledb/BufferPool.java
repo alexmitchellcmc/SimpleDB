@@ -455,7 +455,7 @@ public class BufferPool {
 					}
 				}
 			}
-				 //if tid is holding a WRITE lock on pid, then the tid already has the lock (return false).
+			//if tid is holding a WRITE lock on pid, then the tid already has the lock (return false).
 			if(pageLocks.containsKey(pid)){
 				ArrayList<TransactionId> tids = pageLocks.get(pid);
 				if(pagePerms.containsKey(pid)){
