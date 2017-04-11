@@ -137,12 +137,34 @@ public class BufferPool {
      *
      * @param tid the ID of the transaction requesting the unlock
      * @param commit a flag indicating whether we should commit or abort
+     * 
+     * This method should first deal with dirty pages in the buffer pool for 
+     * committing or aborting to adhere to a FORCE policy. It then calls releaseAllLocks, 
+     * which you will implement next. If the xact is committing (i.e., commit==true ), 
+     * you should flush dirty pages associated with the xact to disk. Else, if the xact 
+     * is aborting, you should throw away any changes to pages that it made (this can be 
+     * done by removing the page from the buffer pool). Note that there is another version 
+     * of transactionComplete that takes a single argument; you do not need to add any code 
+     * there.
      */
     public void transactionComplete(TransactionId tid, boolean commit)
 	throws IOException {
 	// some code goes here
 	// not necessary for lab1|lab2
-	
+	if(commit){
+		for(Map.Entry<PageId, Page> entry : pages.entrySet()){
+			if(entry.getValue().isDirty() != null){
+				flushPage(entry.getKey());
+			}
+		}
+	}
+	else{
+		for(Map.Entry<PageId, Page> entry : pages.entrySet()){
+			if(entry.getValue().isDirty() == tid){
+				pages.remove(entry.getKey());
+			}
+		}
+	}
 	
 	// after dealing with commit vs. abort actions, ask lock manager to release locks
 	lockmgr.releaseAllLocks(tid); // Added for Lab 4
@@ -375,11 +397,14 @@ public class BufferPool {
 	 * This method is used by BufferPool.transactionComplete()
 	 */
 	public synchronized void releaseAllLocks(TransactionId tid) {
-	    // some code here
-	    
+	   if(this.locked.containsKey(tid)){
+		   LinkedList<PageId> pages = locked.get(tid);
+		   for(PageId p : pages){
+			   this.pagePerms.remove(p);
+		   }
+		   locked.remove(tid);
+	   }
 	}
-	
-	
 	
 	/** Return true if the specified transaction has a lock on the specified page
 	 * Simple method used by Buffer Pool to determine whether the given transaction 
