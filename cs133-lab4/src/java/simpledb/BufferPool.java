@@ -429,42 +429,38 @@ public class BufferPool {
 			}
 			//if another tid is holding a READ lock on pid, then the tid can acquire the lock (return false).
 			if(pageLocks.containsKey(pid)){
-				ArrayList<TransactionId> tids = pageLocks.get(pid);
-				TransactionId curLock = tids.get(0);
 				if(pagePerms.containsKey(pid)){
+					ArrayList<TransactionId> tids = pageLocks.get(pid);
 					Permissions p = pagePerms.get(pid);
-					if((!curLock.equals(tid)) && p.equals(Permissions.READ_ONLY)){
-						return false;
-					}
-					//if another tid is holding a WRITE lock on pid, then tid can not currently 
-					//acquire the lock (return true).
-					if((!curLock.equals(tid)) && p.equals(Permissions.READ_WRITE)){
-						return true;
+					for(TransactionId t :tids){
+						if(!(t.equals(tid)) && p.equals(Permissions.READ_ONLY)){
+								return false;
+							}
+						//if another tid is holding a WRITE lock on pid, then tid can not currently 
+						//acquire the lock (return true).
+						if(!(t.equals(tid)) && p.equals(Permissions.READ_WRITE)){
+							return true;
+						}
 					}
 				}
 			}
 		}
 		else{
 			//if tid is THE ONLY ONE holding a READ lock on pid, then tid can acquire the lock (return false).
-			if(pageLocks.containsKey(pid)){
-				ArrayList<TransactionId> tids = pageLocks.get(pid);
-				for (TransactionId ti : tids){
-					LinkedList<PageId> tiPages  = locked.get(ti);
-					for (PageId pa :tiPages){
-						if(pagePerms.get(pa).equals(Permissions.READ_ONLY) && !ti.equals(tid)){
-							return true;
+			//check lock on pid
+			if(this.pagePerms.containsKey(pid)){
+				Permissions p = pagePerms.get(pid);
+				//if p is a READ Lock check if tid is the only one
+				if(p.equals(Permissions.READ_ONLY)){
+					if(pageLocks.containsKey(pid)){
+						ArrayList<TransactionId> tids = pageLocks.get(pid);
+						if(tids.size()==1 && tids.get(0).equals(tid)){
+							return false;
 						}
-					}
-					
-				}
-				if(pagePerms.containsKey(pid)){
-					Permissions p = pagePerms.get(pid);
-					
-					if(p.equals(Permissions.READ_ONLY)){	
-						return false;
 					}
 				}
 			}
+
 			//if tid is holding a WRITE lock on pid, then the tid already has the lock (return false).
 			if(pageLocks.containsKey(pid)){
 				ArrayList<TransactionId> tids = pageLocks.get(pid);
