@@ -334,21 +334,9 @@ public class BufferPool {
      * @Threadsafe
      */
     private class LockManager {
-	
-//    private class TPerm{
-//    	public TransactionId tid;
-//    	public Permissions p;
-//    	private TPerm(TransactionId tid, Permissions p){
-//    		this.tid = tid;
-//    		this.p = p;
-//    	}
-//    }
 	final int LOCK_WAIT = 10;       // milliseconds
 	ConcurrentHashMap<TransactionId, LinkedList<PageId>> locked;
 	ConcurrentHashMap<PageId, ConcurrentHashMap<TransactionId, Permissions>> pageLocks;
-	//HashMap<PageId, Permissions> pagePerms;
-	
-	
 	/**
 	 * Sets up the lock manager to keep track of page-level locks for transactions
 	 * Should initialize state required for the lock table data structure(s)
@@ -364,7 +352,6 @@ public class BufferPool {
 	private LockManager() {
 	    locked = new ConcurrentHashMap<TransactionId, LinkedList<PageId>>();
 	    pageLocks = new ConcurrentHashMap<PageId, ConcurrentHashMap<TransactionId, Permissions>>();
-	    //pagePerms = new HashMap<PageId, Permissions> ();
 	}
 	
 	
@@ -414,7 +401,6 @@ public class BufferPool {
 	   if(this.locked.containsKey(tid)){
 		   LinkedList<PageId> pages = locked.get(tid);
 		   for(PageId p : pages){
-			   //this.pagePerms.remove(p);
 			   ConcurrentHashMap<TransactionId, Permissions> tids = this.pageLocks.get(p);
 			   for(TransactionId t : tids.keySet()){
 				   if(t.equals(tid)){
