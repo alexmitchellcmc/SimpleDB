@@ -1,8 +1,10 @@
 package simpledb;
+
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.tree.*;
+
 /**
  * The JoinOptimizer class is responsible for ordering a series of joins
  * optimally, and for selecting the best instantiation of a join for a given
@@ -11,6 +13,7 @@ import javax.swing.tree.*;
 public class JoinOptimizer {
     LogicalPlan p;
     Vector<LogicalJoinNode> joins;
+
     /**
      * Constructor
      * 
@@ -23,12 +26,14 @@ public class JoinOptimizer {
         this.p = p;
         this.joins = joins;
     }
+
     /**
      * Return best iterator for computing a given logical join, given the
      * specified statistics, and the provided left and right subplans. Note that
      * there is insufficient information to determine which plan should be the
      * inner/outer here -- because DbIterator's don't provide any cardinality
-     * estimates, and stats only has information about the base tables.
+     * estimates, and stats only has information about the base tables. For this
+     * reason, the plan1
      * 
      * @param lj
      *            The join being considered
@@ -39,13 +44,16 @@ public class JoinOptimizer {
      */
     public static DbIterator instantiateJoin(LogicalJoinNode lj,
             DbIterator plan1, DbIterator plan2) throws ParsingException {
+
         int t1id = 0, t2id = 0;
         DbIterator j;
+
         try {
             t1id = plan1.getTupleDesc().fieldNameToIndex(lj.f1QuantifiedName);
         } catch (NoSuchElementException e) {
             throw new ParsingException("Unknown field " + lj.f1QuantifiedName);
         }
+
         if (lj instanceof LogicalSubplanJoinNode) {
             t2id = 0;
         } else {
@@ -57,10 +65,15 @@ public class JoinOptimizer {
                         + lj.f2QuantifiedName);
             }
         }
+
         JoinPredicate p = new JoinPredicate(t1id, lj.p, t2id);
+
         j = new Join(p,plan1,plan2);
+
         return j;
+
     }
+
     /**
      * Estimate the cost of a join.
      * 
@@ -91,18 +104,18 @@ public class JoinOptimizer {
             double cost1, double cost2) {
         if (j instanceof LogicalSubplanJoinNode) {
             // A LogicalSubplanJoinNode represents a subquery.
-            // You do not need to implement support for these for Lab 3
-	    // Just finish the else case below
+            // You do not need to implement support for these for Lab 3.
             return card1 + cost1 + cost2;
         } else {
             // Insert your code here.
-        	return cost1 + card1 * cost2 // IO cost for tuple-nested-loop join
-            + card1 * card2;  // CPU cost
-            // HINT: You may need to use the variable "j" if you implemented
+
+            // HINT: You likely only need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
+            return -1.0;
         }
     }
+
     /**
      * Estimate the cardinality of a join. The cardinality of a join is the
      * number of tuples produced by the join.
@@ -134,46 +147,21 @@ public class JoinOptimizer {
                     stats, p.getTableAliasToIdMapping());
         }
     }
+
     /**
      * Estimate the join cardinality of two tables.
-     * For simple estimations, you will likely not use many of
-     * this method's arguments.
      * */
     public static int estimateTableJoinCardinality(Predicate.Op joinOp,
             String table1Alias, String table2Alias, String field1PureName,
             String field2PureName, int card1, int card2, boolean t1pkey,
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
-    	/*
-		For equality joins, when one of the attributes is a primary key, the 
-		number of tuples produced by the join cannot be larger than the cardinality of the non-primary key attribute.
-		
-		For equality joins when there is no primary key, it's hard to say 
-		much about what the size of the output is -- it could be the size of the 
-		product of the cardinalities of the tables (if both tables have the same 
-		value for all tuples) -- or it could be 0. It's fine to make up a simple 
-		heuristic (say, the size of the larger of the two tables).
-		*/
-		if(joinOp.equals(Predicate.Op.EQUALS) || joinOp.equals(Predicate.Op.NOT_EQUALS)){
-			if(t2pkey || t1pkey){
-				return Math.min(card2, card1);
-			}
-			else{
-				return Math.max(card2, card1); //returns the larger of the two tables
-			}
-		}
-		/*
-		For inequality joins, it is similarly hard to say anything accurate about
-		 sizes. The size of the output should be proportional to the sizes of the inputs. 
-		
-		 It is fine to assume that a fixed fraction of the cross-product is emitted by 
-		 range scans (say, 30%). In general, the cost of an inequality join should be 
-		 larger than the cost of a non-primary key equality join of two tables of the same size. 
-		 */
-		else{
-			return (int) (card1 * card2 * (3.0/10.0));
-		}
+        int card = 1;
+        // some code goes here
+	
+        return card <= 0 ? 1 : card;
     }
+
     /**
      * Helper method to enumerate all of the subsets of a given size of a
      * specified vector.
@@ -188,6 +176,9 @@ public class JoinOptimizer {
     public <T> Set<Set<T>> enumerateSubsets(Vector<T> v, int size) {
         Set<Set<T>> els = new HashSet<Set<T>>();
         els.add(new HashSet<T>());
+        // Iterator<Set> it;
+        // long start = System.currentTimeMillis();
+
         for (int i = 0; i < size; i++) {
             Set<Set<T>> newels = new HashSet<Set<T>>();
             for (Set<T> s : els) {
@@ -199,10 +190,14 @@ public class JoinOptimizer {
             }
             els = newels;
         }
+
         return els;
+
     }
+
     /**
-     * Compute a logical, reasonably efficient join on the specified tables.
+     * Compute a logical, reasonably efficient join on the specified tables. See
+     * PS4 for hints on how this should be implemented.
      * 
      * @param stats
      *            Statistics for each table involved in the join, referenced by
@@ -220,53 +215,15 @@ public class JoinOptimizer {
      *             when stats or filter selectivities is missing a table in the
      *             join, or or when another internal error occurs
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-	public Vector<LogicalJoinNode> orderJoins(
+    public Vector<LogicalJoinNode> orderJoins(
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
-    	
-    	Vector j = this.joins;
-    	
-    	CostCard ccard = new CostCard();
-    	PlanCache bestplan = new PlanCache();
-    	
-    	for (int i=1; i<= j.size(); i++){  // First find best plan for single join, then for two joins, etc. 
-    			
-    		Set<Set<LogicalJoinNode>> sets = (Set<Set<LogicalJoinNode>>) enumerateSubsets(j, i);
-    		
-    		for (Set<LogicalJoinNode> se : sets){ 
-    			
-    			double bestCost = Double.MAX_VALUE;
-    			int card = Integer.MAX_VALUE;
-    			Vector<LogicalJoinNode> v = null;
-    			
-    			for(LogicalJoinNode lnode : se){
-	    			
-    				ccard =  computeCostAndCardOfSubplan(stats, filterSelectivities, lnode, se, bestCost,bestplan); 
-	    			if (ccard == null){
-	    				continue;
-	    			}
-	    			else{
-	    				double curCost = ccard.cost;
-	    				if (curCost < bestCost){
-	    					bestCost = curCost;
-	    					card = ccard.card;
-	    					v = ccard.plan;
-	    				}
-	    			}
-	    			
-    			}
-    			bestplan.addPlan(se,bestCost,card,v);	
-    		}	
-    	}	
-    	if (explain){
-    		printJoins(j, bestplan, stats, filterSelectivities);
-    	}
-    	Set<Set<LogicalJoinNode>> sets = (Set<Set<LogicalJoinNode>>) enumerateSubsets(j, joins.size());
-    	Iterator it = sets.iterator();
-    	return bestplan.getOrder((Set<LogicalJoinNode>) it.next());
-    	
+        //Not necessary for labs 1-2
+
+        // some code goes here
+        //Replace the following
+        return joins;
     }
 
     // ===================== Private Methods =================================

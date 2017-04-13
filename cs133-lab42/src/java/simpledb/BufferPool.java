@@ -372,9 +372,7 @@ public class BufferPool {
 	    	synchronized(this) {
 	    		// you don't have the lock yet
 	    		// possibly some code here for Exercise 5, deadlock detection
-	    		System.out.println("Tries: " + tries);
 	    		if(tries > 10){
-	    			System.out.println("Abort");
 	    			throw new DeadlockException();
 	    		}
 	    	}
