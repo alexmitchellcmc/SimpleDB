@@ -294,30 +294,36 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized  void evictPage() throws DbException {
-	// some code goes here
-	// not necessary for lab1
-	
-	// try to evict a random page, focusing first on finding one that is not dirty
-	// currently does not check for pages with uncommitted xacts, which could impact future labs
-	Object pids[] = pages.keySet().toArray();
-	PageId pid = (PageId) pids[random.nextInt(pids.length)];
-	
-	try {
-	    Page p = pages.get(pid);
-	    if (p.isDirty() != null) { // this one is dirty, try to find first non-dirty
-		for (PageId pg : pages.keySet()) {
-		    if (pages.get(pg).isDirty() == null) {
-			pid = pg;
-			break;
-		    }
-		}
-	    }
-	    flushPage(pid);
-	} catch (IOException e) {
-	    throw new DbException("could not evict page");
-	}
-	pages.remove(pid);
-    }
+    	// some code goes here
+    	// not necessary for lab1
+    	
+    	// try to evict a random page, focusing first on finding one that is not dirty
+    	// currently does not check for pages with uncommitted xacts, which could impact future labs
+    	Object pids[] = pages.keySet().toArray();
+    	PageId pid = (PageId) pids[random.nextInt(pids.length)];
+    	boolean b = true;
+    	try {
+    	    Page p = pages.get(pid);
+    	    if (p.isDirty() != null) { // this one is dirty, try to find first non-dirty
+    	    	b = false;
+    		for (PageId pg : pages.keySet()) {
+    		    if (pages.get(pg).isDirty() == null) {
+    			    b = true; 
+    				pid = pg;
+    				break;
+    		    }
+    		}
+    	    }
+    	    flushPage(pid);
+    	} catch (IOException e) {
+    	    throw new DbException("could not evict page");
+    	}
+    	if(b){
+    		pages.remove(pid);
+    	}else {
+    		throw new DbException("couln't evict page");
+    	}
+        }
     
     /**
      * Manages locks on PageIds held by TransactionIds.

@@ -301,14 +301,16 @@ public class BufferPool {
 	// currently does not check for pages with uncommitted xacts, which could impact future labs
 	Object pids[] = pages.keySet().toArray();
 	PageId pid = (PageId) pids[random.nextInt(pids.length)];
-	
+	boolean b = true;
 	try {
 	    Page p = pages.get(pid);
 	    if (p.isDirty() != null) { // this one is dirty, try to find first non-dirty
+	    	b = false;
 		for (PageId pg : pages.keySet()) {
 		    if (pages.get(pg).isDirty() == null) {
-			pid = pg;
-			break;
+			    b = true; 
+				pid = pg;
+				break;
 		    }
 		}
 	    }
@@ -316,7 +318,11 @@ public class BufferPool {
 	} catch (IOException e) {
 	    throw new DbException("could not evict page");
 	}
-	pages.remove(pid);
+	if(b){
+		pages.remove(pid);
+	}else {
+		throw new DbException("couln't evict page");
+	}
     }
     
     /**
@@ -329,9 +335,9 @@ public class BufferPool {
     private class LockManager {
 	
 	final int LOCK_WAIT = 10;       // milliseconds
-	HashMap<TransactionId, LinkedList<PageId>> locked;
-	HashMap<PageId, LinkedList<TransactionId>> pageLocks;
-	HashMap<PageId, Permissions> pagePerms;
+	ConcurrentHashMap<TransactionId, LinkedList<PageId>> locked;
+	ConcurrentHashMap<PageId, LinkedList<TransactionId>> pageLocks;
+	ConcurrentHashMap<PageId, Permissions> pagePerms;
 	
 	
 	/**
@@ -347,9 +353,9 @@ public class BufferPool {
 	   If you create a helper class for which you will eventually want to check equality of instances, be sure to implement its equals() method.
 	 */
 	private LockManager() {
-	    locked = new HashMap<TransactionId, LinkedList<PageId>>();
-	    pageLocks = new HashMap<PageId, LinkedList<TransactionId>>();
-	    pagePerms = new HashMap<PageId, Permissions> ();
+	    locked = new ConcurrentHashMap<TransactionId, LinkedList<PageId>>();
+	    pageLocks = new ConcurrentHashMap<PageId, LinkedList<TransactionId>>();
+	    pagePerms = new ConcurrentHashMap<PageId, Permissions> ();
 	}
 	
 	
