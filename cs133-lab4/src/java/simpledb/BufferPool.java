@@ -5,6 +5,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 /**
  * BufferPool manages the reading and writing of pages into memory from
  * disk. Access methods call into it to retrieve pages, and it fetches
@@ -334,10 +335,18 @@ public class BufferPool {
      */
     private class LockManager {
 	
+//    private class TPerm{
+//    	public TransactionId tid;
+//    	public Permissions p;
+//    	private TPerm(TransactionId tid, Permissions p){
+//    		this.tid = tid;
+//    		this.p = p;
+//    	}
+//    }
 	final int LOCK_WAIT = 10;       // milliseconds
-	HashMap<TransactionId, LinkedList<PageId>> locked;
-	HashMap<PageId, LinkedList<TransactionId>> pageLocks;
-	HashMap<PageId, Permissions> pagePerms;
+	ConcurrentHashMap<TransactionId, LinkedList<PageId>> locked;
+	ConcurrentHashMap<PageId, ConcurrentHashMap<TransactionId, Permissions>> pageLocks;
+	//HashMap<PageId, Permissions> pagePerms;
 	
 	
 	/**
@@ -353,9 +362,9 @@ public class BufferPool {
 	   If you create a helper class for which you will eventually want to check equality of instances, be sure to implement its equals() method.
 	 */
 	private LockManager() {
-	    locked = new HashMap<TransactionId, LinkedList<PageId>>();
-	    pageLocks = new HashMap<PageId, LinkedList<TransactionId>>();
-	    pagePerms = new HashMap<PageId, Permissions> ();
+	    locked = new ConcurrentHashMap<TransactionId, LinkedList<PageId>>();
+	    pageLocks = new ConcurrentHashMap<PageId, ConcurrentHashMap<TransactionId, Permissions>>();
+	    //pagePerms = new HashMap<PageId, Permissions> ();
 	}
 	
 	
@@ -405,10 +414,14 @@ public class BufferPool {
 	   if(this.locked.containsKey(tid)){
 		   LinkedList<PageId> pages = locked.get(tid);
 		   for(PageId p : pages){
-			   this.pagePerms.remove(p);
-			   LinkedList<TransactionId> tids = this.pageLocks.get(p);
-			   tids.remove(tid);
-			   pageLocks.put(p, tids);
+			   //this.pagePerms.remove(p);
+			   ConcurrentHashMap<TransactionId, Permissions> tids = this.pageLocks.get(p);
+			   for(TransactionId t : tids.keySet()){
+				   if(t.equals(tid)){
+					   tids.remove(t);
+					   pageLocks.put(p, tids);
+				   }
+			   }
 		   }
 		   locked.remove(tid);
 	   }
@@ -462,60 +475,45 @@ public class BufferPool {
 			}
 			//if another tid is holding a READ lock on pid, then the tid can acquire the lock (return false).
 			if(pageLocks.containsKey(pid)){
-				if(pagePerms.containsKey(pid)){
-					LinkedList<TransactionId> tids = pageLocks.get(pid);
-					Permissions p = pagePerms.get(pid);
-					for(TransactionId t :tids){
-						if(!(t.equals(tid)) && p.equals(Permissions.READ_ONLY)){
-								return false;
-							}
-						//if another tid is holding a WRITE lock on pid, then tid can not currently 
-						//acquire the lock (return true).
-						if(!(t.equals(tid)) && p.equals(Permissions.READ_WRITE)){
-							return true;
-						}
+				ConcurrentHashMap<TransactionId, Permissions> tids = pageLocks.get(pid);
+				for(TransactionId t :tids.keySet()){
+					if(!(t.equals(tid)) && tids.get(t).equals(Permissions.READ_ONLY)){
+						return false;
+					}
+					//if another tid is holding a WRITE lock on pid, then tid can not currently 
+					//acquire the lock (return true).
+					if(!(t.equals(tid)) && tids.get(t).equals(Permissions.READ_WRITE)){
+						return true;
+					}
 					}
 				}
-			}
 		}
 		else{
 			//if tid is THE ONLY ONE holding a READ lock on pid, then tid can acquire the lock (return false).
 			//check lock on pid
-			if(this.pagePerms.containsKey(pid)){
-				Permissions p = pagePerms.get(pid);
-				//if p is a READ Lock check if tid is the only one
-				if(p.equals(Permissions.READ_ONLY)){
-					if(pageLocks.containsKey(pid)){
-						LinkedList<TransactionId> tids = pageLocks.get(pid);
-						if(tids.size()==1 && tids.get(0).equals(tid)){
-							return false;
-						}
-					}
+			if(this.pageLocks.containsKey(pid)){
+				ConcurrentHashMap<TransactionId, Permissions> tids = pageLocks.get(pid);
+				if(tids.size()==1 && tids.get(tid) != null && tids.get(tid).equals(Permissions.READ_ONLY)){
+					return false;
 				}
 			}
-
+			
 			//if tid is holding a WRITE lock on pid, then the tid already has the lock (return false).
 			if(pageLocks.containsKey(pid)){
-				LinkedList<TransactionId> tids = pageLocks.get(pid);
-				if(pagePerms.containsKey(pid)){
-					Permissions p = pagePerms.get(pid);
-					for(TransactionId t : tids){
-						if(t.equals(tid) && p.equals(Permissions.READ_WRITE)){
+				ConcurrentHashMap<TransactionId, Permissions> tids = pageLocks.get(pid);
+				for(TransactionId t : tids.keySet()){
+					if(t.equals(tid) && tids.get(t).equals(Permissions.READ_WRITE)){
 							return false;
-						}
 					}
 				}
 			}
 			//if another tid is holding any sort of lock on pid, then the tid cannot currenty acquire the lock (return true).
 			if(pageLocks.containsKey(pid)){
-				LinkedList<TransactionId> tids = pageLocks.get(pid);
-				if(pagePerms.containsKey(pid)){
-					Permissions p = pagePerms.get(pid);
-					for(TransactionId t : tids){
-						if((!t.equals(tid)) && (p.equals(Permissions.READ_WRITE) || p.equals(Permissions.READ_ONLY))){
+				ConcurrentHashMap<TransactionId, Permissions> tids = pageLocks.get(pid);
+				for(TransactionId t : tids.keySet()){
+						if((!t.equals(tid)) && (tids.get(t).equals(Permissions.READ_WRITE) || tids.get(t).equals(Permissions.READ_ONLY)) ){
 							return true;
 						}
-					}
 				}
 			}
 		}
@@ -537,12 +535,14 @@ public class BufferPool {
 	    	locked.put(tid, pages);
 	    }
 	    if(pageLocks.containsKey(pid)){
-	    	LinkedList<TransactionId> tids = pageLocks.get(pid);
-			tids.remove(tid);
-			pageLocks.put(pid, tids);
+	    	ConcurrentHashMap<TransactionId, Permissions> tids = pageLocks.get(pid);
+	    	for(TransactionId t: tids.keySet()){
+	    		if(t.equals(tid)){
+	    			tids.remove(t);
+	    			pageLocks.put(pid, tids);
+	    		}
+	    	}
 	    }
-	    this.pagePerms.remove(pid);
-	    
 	}
 	
 	
@@ -572,17 +572,15 @@ public class BufferPool {
 	    	}
 	    	//pageLocks
 	       	if(pageLocks.containsKey(pid)){
-	    		LinkedList<TransactionId> tids = pageLocks.get(pid);
-	    		tids.add(tid);
+	    		ConcurrentHashMap<TransactionId, Permissions> tids = pageLocks.get(pid);
+	    		tids.put(tid,perm);
 	    		pageLocks.put(pid, tids);
 	    	}
 	    	else{
-	    		LinkedList<TransactionId> tids = new LinkedList<TransactionId>();
-	    		tids.add(tid);
+	    		ConcurrentHashMap<TransactionId, Permissions> tids = new ConcurrentHashMap<TransactionId, Permissions>();
+	    		tids.put(tid,perm);
 	    		pageLocks.put(pid, tids);
 	    	}
-	       	//pagePerms
-	       	pagePerms.put(pid, perm);
 	    	return true;
 	    }
 	}
